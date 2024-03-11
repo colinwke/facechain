@@ -681,10 +681,14 @@ def main():
             text_encoder = Swift.prepare_model(text_encoder, lora_config)
     else:
         # freeze parameters of models to save more memory
-        unet.requires_grad_(False)
-        vae.requires_grad_(False)
-
-        text_encoder.requires_grad_(False)
+        # unet.requires_grad_(False)
+        # vae.requires_grad_(False)
+        # text_encoder.requires_grad_(False)
+        # fixed `RuntimeError: element 0 of tensors does not require grad and does not have a grad_fn`
+        print('aaa unet.requires_grad_(True)')
+        unet.requires_grad_(True)
+        vae.requires_grad_(True)
+        text_encoder.requires_grad_(True)
 
         # now we will add new LoRA weights to the attention layers
         # It's important to realize here how many attention weights will be added and of which sizes
@@ -1031,6 +1035,17 @@ def main():
                 # Gather the losses across all processes for logging (if we use distributed training).
                 avg_loss = accelerator.gather(loss.repeat(args.train_batch_size)).mean()
                 train_loss += avg_loss.item() / args.gradient_accumulation_steps
+
+                # if hasattr(accelerator, "enable_input_require_grads"):
+                #     accelerator.enable_input_require_grads()
+                #     print('aaaaaaaaaaaaaa\n' * 3)
+                # else:
+                #     print('aaaaaaaaaaaaaabbbbbbb\n'* 3)
+                #     def make_inputs_require_grad(module, input, output):
+                #         output.requires_grad_(True)
+                #     accelerator.get_input_embeddings().register_forward_hook(make_inputs_require_grad)
+
+                # accelerator.requires_grad_(True)
 
                 # Backpropagate
                 accelerator.backward(loss)

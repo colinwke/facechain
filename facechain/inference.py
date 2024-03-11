@@ -617,6 +617,8 @@ class GenPortrait:
                         out_results.append(out_img)
                     final_gen_results = out_results
             else:
+                if sr_img_size is None:
+                    sr_img_size = 1
                 if int(sr_img_size) != 0:
                     out_results = []
                     for i in range(len(final_gen_results)):
