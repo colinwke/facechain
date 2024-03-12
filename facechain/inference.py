@@ -175,7 +175,9 @@ def main_diffusion_inference(pos_prompt, neg_prompt,
         pipe.load_lora_weights(weighted_lora_human_state_dict)
         print('lora merging done')
     else:
-        pipe = StableDiffusionPipeline.from_pretrained(base_model_path, safety_checker=None, torch_dtype=torch.float32)    
+        # https://zhuanlan.zhihu.com/p/652452089 Facechain系列(5)-GPU内存优化实操
+        pipe = StableDiffusionPipeline.from_pretrained(base_model_path, safety_checker=None, torch_dtype=torch.float16)
+        pipe.enable_model_cpu_offload()
         if use_lcm:
             try:
                 from diffusers import LCMScheduler
@@ -619,6 +621,7 @@ class GenPortrait:
             else:
                 if sr_img_size is None:
                     sr_img_size = 1
+
                 if int(sr_img_size) != 0:
                     out_results = []
                     for i in range(len(final_gen_results)):

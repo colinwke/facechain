@@ -16,7 +16,6 @@
 """Fine-tuning script for Stable Diffusion for text2image with support for LoRA."""
 
 import argparse
-import base64
 import itertools
 import json
 import logging
@@ -24,20 +23,19 @@ import math
 import os
 import random
 import shutil
-from glob import glob
+import sys
 from pathlib import Path
+from typing import Tuple
 
+import PIL.Image
 import cv2
 import datasets
 import diffusers
 import numpy as np
 import onnxruntime
-import PIL.Image
 import torch
 import torch.nn.functional as F
 import torch.utils.checkpoint
-from torch import Tensor
-from typing import List, Optional, Tuple, Union
 import torchvision.transforms.functional as Ft
 import transformers
 from accelerate import Accelerator
@@ -45,16 +43,17 @@ from accelerate.logging import get_logger
 from accelerate.utils import ProjectConfiguration, set_seed
 from datasets import load_dataset
 from diffusers import (AutoencoderKL, DDPMScheduler, DiffusionPipeline,
-                       DPMSolverMultistepScheduler,
-                       StableDiffusionInpaintPipeline, UNet2DConditionModel)
+                       UNet2DConditionModel)
 from diffusers.loaders import AttnProcsLayers
 from diffusers.models.attention_processor import LoRAAttnProcessor
 from diffusers.optimization import get_scheduler
 from diffusers.utils import check_min_version, is_wandb_available
 from diffusers.utils.import_utils import is_xformers_available
 from huggingface_hub import create_repo, upload_folder
+from torch import Tensor
 
-import sys
+from facechain.wktk.base_utils import Timestamp
+
 parent_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if parent_path not in sys.path:
     sys.path.append(parent_path)
@@ -529,6 +528,7 @@ DATASET_NAME_MAPPING = {
 
 
 def main():
+    ts = Timestamp()
 
     args = parse_args()
     logging_dir = os.path.join(args.output_dir, args.logging_dir)
@@ -646,7 +646,7 @@ def main():
                 bias=args.lora_text_encoder_bias,
             )
             text_encoder = LoraModel(config, text_encoder)
-    elif args.use_swift:                
+    elif args.use_swift:
         if not is_swift_available():
             raise ValueError(
                 'Please install swift by `pip install ms-swift` to use efficient_tuners.'
@@ -681,14 +681,14 @@ def main():
             text_encoder = Swift.prepare_model(text_encoder, lora_config)
     else:
         # freeze parameters of models to save more memory
-        # unet.requires_grad_(False)
-        # vae.requires_grad_(False)
-        # text_encoder.requires_grad_(False)
+        unet.requires_grad_(False)
+        vae.requires_grad_(False)
+        text_encoder.requires_grad_(False)
         # fixed `RuntimeError: element 0 of tensors does not require grad and does not have a grad_fn`
-        print('aaa unet.requires_grad_(True)')
-        unet.requires_grad_(True)
-        vae.requires_grad_(True)
-        text_encoder.requires_grad_(True)
+        # or simply use `loss.requires_grad_(True)`
+        # unet.requires_grad_(True)
+        # vae.requires_grad_(True)
+        # text_encoder.requires_grad_(True)
 
         # now we will add new LoRA weights to the attention layers
         # It's important to realize here how many attention weights will be added and of which sizes
@@ -745,7 +745,7 @@ def main():
 
     if args.scale_lr:
         args.learning_rate = (
-            args.learning_rate * args.gradient_accumulation_steps * args.train_batch_size * accelerator.num_processes
+                args.learning_rate * args.gradient_accumulation_steps * args.train_batch_size * accelerator.num_processes
         )
 
     # Initialize the optimizer
@@ -858,8 +858,8 @@ def main():
     # Preprocessing the datasets.
     train_transforms = transforms.Compose(
         [
-            #transforms.Resize(args.resolution, interpolation=transforms.InterpolationMode.BILINEAR),
-            #transforms.CenterCrop(args.resolution) if args.center_crop else transforms.RandomCrop(args.resolution),
+            # transforms.Resize(args.resolution, interpolation=transforms.InterpolationMode.BILINEAR),
+            # transforms.CenterCrop(args.resolution) if args.center_crop else transforms.RandomCrop(args.resolution),
             FaceCrop(),
             transforms.Resize(args.resolution, interpolation=transforms.InterpolationMode.BILINEAR),
             transforms.RandomHorizontalFlip() if args.random_flip else transforms.Lambda(lambda x: x),
@@ -1036,16 +1036,9 @@ def main():
                 avg_loss = accelerator.gather(loss.repeat(args.train_batch_size)).mean()
                 train_loss += avg_loss.item() / args.gradient_accumulation_steps
 
-                # if hasattr(accelerator, "enable_input_require_grads"):
-                #     accelerator.enable_input_require_grads()
-                #     print('aaaaaaaaaaaaaa\n' * 3)
-                # else:
-                #     print('aaaaaaaaaaaaaabbbbbbb\n'* 3)
-                #     def make_inputs_require_grad(module, input, output):
-                #         output.requires_grad_(True)
-                #     accelerator.get_input_embeddings().register_forward_hook(make_inputs_require_grad)
-
-                # accelerator.requires_grad_(True)
+                # RuntimeError: element 0 of tensors does not require grad and does not have a grad_fn
+                # https://github.com/LlamaFamily/Llama-Chinese/issues/242#issuecomment-1772231875
+                loss.requires_grad_()
 
                 # Backpropagate
                 accelerator.backward(loss)
@@ -1081,7 +1074,6 @@ def main():
 
             if global_step >= args.max_train_steps:
                 break
-
 
         if accelerator.is_main_process:
             if args.validation_prompt is not None and epoch % args.validation_epochs == 0:
@@ -1122,7 +1114,7 @@ def main():
                             )
 
                 del pipeline
-                torch.cuda.empty_cache() 
+                torch.cuda.empty_cache()
 
     # Save the lora layers
     accelerator.wait_for_everyone()
@@ -1232,6 +1224,7 @@ def main():
     images = []
 
     accelerator.end_training()
+    ts.end()
 
 
 if __name__ == "__main__":

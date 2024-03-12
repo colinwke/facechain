@@ -1,23 +1,34 @@
 from facechain.utils import project_dir
+
 neg_prompt = '(nsfw:2), paintings, sketches, (worst quality:2), (low quality:2), ' \
-             'lowers, normal quality, ((monochrome)), ((grayscale)), logo, word, character, bad hand, tattoo, (username, watermark, signature, time signature, timestamp, artist name, copyright name, copyright),'\
+             'lowers, normal quality, ((monochrome)), ((grayscale)), logo, word, character, bad hand, tattoo, (username, watermark, signature, time signature, timestamp, artist name, copyright name, copyright),' \
              'low res, ((monochrome)), ((grayscale)), skin spots, acnes, skin blemishes, age spot, glans, extra fingers, fewer fingers, strange fingers, bad hand, mole, ((extra legs)), ((extra hands))'
-pos_prompt_with_cloth = 'raw photo, masterpiece, chinese, {}, solo, medium shot, high detail face, looking straight into the camera with shoulders parallel to the frame, photorealistic, best quality'
+# pos_prompt_with_cloth = 'raw photo, masterpiece, chinese, {}, solo, medium shot, high detail face, looking straight into the camera with shoulders parallel to the frame, photorealistic, best quality'
+pos_prompt_with_cloth = 'formal wear, formal clothes, identification photo, ID photo, raw photo, masterpiece, chinese, solo, medium shot, high detail face, looking straight into the camera with shoulders parallel to the frame, photorealistic, best quality'
+pos_prompt_with_cloth = 'muscle, raw photo, masterpiece, chinese, solo, medium shot, high detail face, looking straight into the camera with shoulders parallel to the frame, photorealistic, best quality'
+pos_prompt_with_cloth = 'raw photo, masterpiece, chinese, solo, medium shot, high detail face, looking straight into the camera with shoulders parallel to the frame, photorealistic, best quality'
+
 pos_prompt_with_style = '{}, upper_body, raw photo, masterpiece, solo, medium shot, high detail face, photorealistic, best quality'
 
 base_models = [
-    {'name': 'leosamsMoonfilm_filmGrain20',
-    'model_id': 'ly261666/cv_portrait_model',
-    'revision': 'v2.0',
-    'sub_path': "film/film"},
-    {'name': 'MajicmixRealistic_v6',
-    'model_id': 'YorickHe/majicmixRealistic_v6',
-    'revision': 'v1.0.0',
-    'sub_path': "realistic"},
-    {'name': 'sdxl_1.0',
-    'model_id': 'AI-ModelScope/stable-diffusion-xl-base-1.0',
-    'revision': 'v1.0.0',
-    'sub_path': ""},
+    {
+        'name': 'leosamsMoonfilm_filmGrain20',
+        'model_id': 'ly261666/cv_portrait_model',
+        'revision': 'v2.0',
+        'sub_path': "film/film"
+    },
+    {
+        'name': 'MajicmixRealistic_v6',
+        'model_id': 'YorickHe/majicmixRealistic_v6',
+        'revision': 'v1.0.0',
+        'sub_path': "realistic"
+    },
+    {
+        'name': 'sdxl_1.0',
+        'model_id': 'AI-ModelScope/stable-diffusion-xl-base-1.0',
+        'revision': 'v1.0.0',
+        'sub_path': ""
+    },
 ]
 
 pose_models = [
@@ -40,7 +51,6 @@ pose_examples = {
         [f'{project_dir}/poses/woman/pose4.png'],
     ]
 }
-
 
 tts_speakers_map = {
     '普通话(中国大陆)-Xiaoxiao-女': 'zh-CN-XiaoxiaoNeural',
@@ -333,4 +343,4 @@ tts_speakers_map = {
     '乌兹别克语(乌兹别克斯坦)-Sardor-男': 'uz-UZ-SardorNeural',
     '祖鲁语(南非)-Thando-女': 'zu-ZA-ThandoNeural',
     '祖鲁语(南非)-Themba-男': 'zu-ZA-ThembaNeural'
- }
+}

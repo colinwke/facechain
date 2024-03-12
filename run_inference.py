@@ -1,10 +1,15 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
 import json
-from facechain.inference import GenPortrait
+import os
+
 import cv2
-from facechain.utils import snapshot_download
+
 from facechain.constants import neg_prompt, pos_prompt_with_cloth, pos_prompt_with_style, base_models
+from facechain.inference import GenPortrait
+from facechain.utils import snapshot_download
+from facechain.wktk.base_utils import PF, Timestamp, DateTime
+
+timestamp = Timestamp()
 
 
 def generate_pos_prompt(style_model, prompt_cloth):
@@ -20,6 +25,7 @@ def generate_pos_prompt(style_model, prompt_cloth):
     else:
         pos_prompt = pos_prompt_with_cloth.format(prompt_cloth)
     return pos_prompt
+
 
 styles = []
 for base_model in base_models:
@@ -71,6 +77,19 @@ else:
     model_dir = snapshot_download('damo/face_chain_control_model', revision='v1.0.1')
     pose_model_path = os.path.join(model_dir, 'model_controlnet/control_v11p_sd15_openpose')
 
+all_params = """pose_model_path, pose_image, use_depth_control, pos_prompt, neg_prompt, style_model_path,
+                           multiplier_style, multiplier_human, use_main_model,
+                           use_face_swap, use_post_process,
+                           use_stylization"""
+all_params = [x.strip() for x in all_params.split(',')]
+PF.print_list(all_params, 'all_params')
+all_params = dict(zip(all_params, [str(x) for x in [pose_model_path, pose_image, use_depth_control, pos_prompt, neg_prompt, style_model_path,
+                                                    multiplier_style, multiplier_human, use_main_model,
+                                                    use_face_swap, use_post_process,
+                                                    use_stylization]]))
+
+PF.print_dict(all_params, title='all_params')
+
 gen_portrait = GenPortrait(pose_model_path, pose_image, use_depth_control, pos_prompt, neg_prompt, style_model_path,
                            multiplier_style, multiplier_human, use_main_model,
                            use_face_swap, use_post_process,
@@ -80,7 +99,9 @@ outputs = gen_portrait(processed_dir, num_generate, base_model['model_id'],
                        train_output_dir, base_model['sub_path'], base_model['revision'])
 
 os.makedirs(output_dir, exist_ok=True)
+runtime_flag = DateTime.datetime()
 
 for i, out_tmp in enumerate(outputs):
-    cv2.imwrite(os.path.join(output_dir, f'{i}.png'), out_tmp)
+    cv2.imwrite(os.path.join(output_dir, f'{runtime_flag}_{i}.png'), out_tmp)
 
+timestamp.end()
