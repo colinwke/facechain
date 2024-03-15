@@ -9,7 +9,7 @@ from densepose.vis.extractor import DensePoseResultExtractor
 from densepose.vis.densepose_results import DensePoseResultsFineSegmentationVisualizer as Visualizer
 import tempfile
 import shutil
-from facechain.utils import snapshot_download
+from facechain.utils import snapshot_download_dk
 from facechain.utils import join_worker_data_dir
 import os
 import subprocess

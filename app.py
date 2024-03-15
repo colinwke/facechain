@@ -21,7 +21,7 @@ from facechain.inference_inpaint import GenPortrait_inpaint
 from facechain.inference_talkinghead import SadTalker, text_to_speech_edge
 from facechain.inference_tryon import GenPortrait_tryon
 from facechain.train_text_to_image_lora import prepare_dataset, data_process_fn
-from facechain.utils import snapshot_download, check_ffmpeg, set_spawn_method, project_dir, join_worker_data_dir
+from facechain.utils import snapshot_download_dk, check_ffmpeg, set_spawn_method, project_dir, join_worker_data_dir
 
 training_done_count = 0
 inference_done_count = 0
@@ -299,7 +299,7 @@ def launch_pipeline(uuid,
         if matched['model_id'] is None:
             style_model_path = None
         else:
-            model_dir = snapshot_download(matched['model_id'], revision=matched['revision'])
+            model_dir = snapshot_download_dk(matched['model_id'], revision=matched['revision'])
             style_model_path = os.path.join(model_dir, matched['bin_file'])
     else:
         print(f'uuid: {uuid}')
@@ -315,7 +315,7 @@ def launch_pipeline(uuid,
         use_depth_control = False
         pose_image = None
     else:
-        model_dir = snapshot_download('damo/face_chain_control_model', revision='v1.0.1')
+        model_dir = snapshot_download_dk('damo/face_chain_control_model', revision='v1.0.1')
         pose_model_path = os.path.join(model_dir, 'model_controlnet/control_v11p_sd15_openpose')
         if pose_model == 1:
             use_depth_control = True
@@ -446,7 +446,7 @@ def launch_pipeline_inpaint(uuid,
     strength = 0.65
     output_img_size = 512
 
-    model_dir = snapshot_download('ly261666/cv_wanx_style_model', revision='v1.0.3')
+    model_dir = snapshot_download_dk('ly261666/cv_wanx_style_model', revision='v1.0.3')
     style_model_path = os.path.join(model_dir, 'zjz_mj_jiyi_small_addtxt_frommajicreal.safetensors')
 
     pos_prompt = 'raw photo, masterpiece, chinese, simple background, high-class pure color background, solo, medium shot, high detail face, photorealistic, best quality, wearing T-shirt'
@@ -642,7 +642,7 @@ def launch_pipeline_tryon(uuid,
     if tmp_character_model != character_model:
         tmp_character_model = 'ly261666/cv_portrait_model'
 
-    model_dir = snapshot_download('ly261666/cv_wanx_style_model', revision='v1.0.3')
+    model_dir = snapshot_download_dk('ly261666/cv_wanx_style_model', revision='v1.0.3')
     style_model_path = os.path.join(model_dir, 'zjz_mj_jiyi_small_addtxt_frommajicreal.safetensors')
 
     pos_prompt = 'raw photo, masterpiece, ' + background_prompt + ', (completely nude:2), solo, medium shot, high detail face, photorealistic, best quality'

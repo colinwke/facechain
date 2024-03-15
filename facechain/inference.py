@@ -18,7 +18,7 @@ from transformers import pipeline as tpipeline
 
 from facechain.data_process.preprocessing import Blipv2
 from facechain.merge_lora import merge_lora
-from facechain.utils import snapshot_download
+from facechain.utils import snapshot_download_dk
 
 
 def _data_process_fn_process(input_img_dir):
@@ -89,7 +89,7 @@ def img_pad(pil_file, fixed_height=512, fixed_width=512):
 def preprocess_pose(origin_img) -> Image:
     img = Image.open(origin_img)
     img = img_pad(img)
-    model_dir = snapshot_download('damo/face_chain_control_model', revision='v1.0.1')
+    model_dir = snapshot_download_dk('damo/face_chain_control_model', revision='v1.0.1')
     openpose = OpenposeDetector.from_pretrained(os.path.join(model_dir, 'model_controlnet/ControlNet'))
     result = openpose(img, include_hand=True, output_type='np')
     # resize to original size
@@ -180,7 +180,7 @@ def main_diffusion_inference(
         multiplier_human=0.85
 ):
     if style_model_path is None:
-        model_dir = snapshot_download('Cherrytest/zjz_mj_jiyi_small_addtxt_fromleo', revision='v1.0.0')
+        model_dir = snapshot_download_dk('Cherrytest/zjz_mj_jiyi_small_addtxt_fromleo', revision='v1.0.0')
         style_model_path = os.path.join(model_dir, 'zjz_mj_jiyi_small_addtxt_fromleo.safetensors')
 
     lora_style_path = style_model_path
@@ -193,7 +193,7 @@ def main_diffusion_inference(
                 from diffusers import LCMScheduler
             except:
                 raise ImportError('diffusers version is not right, please update diffsers to >=0.22')
-            lcm_model_path = snapshot_download('AI-ModelScope/lcm-lora-sdxl')
+            lcm_model_path = snapshot_download_dk('AI-ModelScope/lcm-lora-sdxl')
             pipe.load_lora_weights(lcm_model_path)
             pipe.scheduler = LCMScheduler.from_config(pipe.scheduler.config)
             num_inference_steps = 8
@@ -235,7 +235,7 @@ def main_diffusion_inference(
                 from diffusers import LCMScheduler
             except:
                 raise ImportError('diffusers version is not right, please update diffsers to >=0.22')
-            lcm_model_path = snapshot_download('eavesy/lcm-lora-sdv1-5')
+            lcm_model_path = snapshot_download_dk('eavesy/lcm-lora-sdv1-5')
             pipe.load_lora_weights(lcm_model_path)
             pipe.scheduler = LCMScheduler.from_config(pipe.scheduler.config)
             num_inference_steps = 8
@@ -320,7 +320,7 @@ def main_diffusion_inference_pose(
         multiplier_human=0.85
 ):
     if style_model_path is None:
-        model_dir = snapshot_download('Cherrytest/zjz_mj_jiyi_small_addtxt_fromleo', revision='v1.0.0')
+        model_dir = snapshot_download_dk('Cherrytest/zjz_mj_jiyi_small_addtxt_fromleo', revision='v1.0.0')
         style_model_path = os.path.join(model_dir, 'zjz_mj_jiyi_small_addtxt_fromleo.safetensors')
 
     controlnet = ControlNetModel.from_pretrained(pose_model_path, torch_dtype=torch.float32)
@@ -329,7 +329,7 @@ def main_diffusion_inference_pose(
 
     pose_im = Image.open(pose_image)
     pose_im = img_pad(pose_im)
-    model_dir = snapshot_download('damo/face_chain_control_model', revision='v1.0.1')
+    model_dir = snapshot_download_dk('damo/face_chain_control_model', revision='v1.0.1')
     openpose = OpenposeDetector.from_pretrained(os.path.join(model_dir, 'model_controlnet/ControlNet'))
     pose_im = openpose(pose_im, include_hand=True)
 
@@ -404,10 +404,10 @@ def main_diffusion_inference_multi(
         multiplier_human=0.85
 ):
     if style_model_path is None:
-        model_dir = snapshot_download('Cherrytest/zjz_mj_jiyi_small_addtxt_fromleo', revision='v1.0.0')
+        model_dir = snapshot_download_dk('Cherrytest/zjz_mj_jiyi_small_addtxt_fromleo', revision='v1.0.0')
         style_model_path = os.path.join(model_dir, 'zjz_mj_jiyi_small_addtxt_fromleo.safetensors')
 
-    model_dir = snapshot_download('damo/face_chain_control_model', revision='v1.0.1')
+    model_dir = snapshot_download_dk('damo/face_chain_control_model', revision='v1.0.1')
     controlnet = [
         ControlNetModel.from_pretrained(pose_model_path, torch_dtype=torch.float32),
         ControlNetModel.from_pretrained(os.path.join(model_dir, 'model_controlnet/control_v11p_sd15_depth'), torch_dtype=torch.float32)
@@ -678,7 +678,7 @@ class GenPortrait:
             portrait_stylization_idx=None,
             use_lcm_idx=None
     ):
-        base_model_path = snapshot_download(base_model_path, revision=revision)
+        base_model_path = snapshot_download_dk(base_model_path, revision=revision)
         if sub_path is not None and len(sub_path) > 0:
             base_model_path = os.path.join(base_model_path, sub_path)
 

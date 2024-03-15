@@ -12,7 +12,7 @@ from skimage import transform
 from controlnet_aux import OpenposeDetector
 from diffusers import StableDiffusionPipeline, StableDiffusionControlNetPipeline, \
     StableDiffusionControlNetInpaintPipeline, ControlNetModel, UniPCMultistepScheduler
-from facechain.utils import snapshot_download
+from facechain.utils import snapshot_download_dk
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
@@ -228,13 +228,13 @@ def main_diffusion_inference_inpaint(inpaint_image, strength, output_img_size, p
                                      multiplier_style=0.05,
                                      multiplier_human=1.0):
     if style_model_path is None:
-        model_dir = snapshot_download('Cherrytest/zjz_mj_jiyi_small_addtxt_fromleo', revision='v1.0.0')
+        model_dir = snapshot_download_dk('Cherrytest/zjz_mj_jiyi_small_addtxt_fromleo', revision='v1.0.0')
         style_model_path = os.path.join(model_dir, 'zjz_mj_jiyi_small_addtxt_fromleo.safetensors')
 
     segmentation_pipeline = pipeline(Tasks.image_segmentation, 'damo/cv_resnet101_image-multiple-human-parsing')
     det_pipeline = pipeline(Tasks.face_detection, 'damo/cv_ddsar_face-detection_iclr23-damofd')
-    model_dir = snapshot_download('damo/face_chain_control_model', revision='v1.0.1')
-    model_dir1 = snapshot_download('ly261666/cv_wanx_style_model',revision='v1.0.3')
+    model_dir = snapshot_download_dk('damo/face_chain_control_model', revision='v1.0.1')
+    model_dir1 = snapshot_download_dk('ly261666/cv_wanx_style_model',revision='v1.0.3')
 
     if output_img_size == 512:
         dtype = torch.float32
@@ -400,13 +400,13 @@ def main_diffusion_inference_inpaint_multi(inpaint_images, strength, output_img_
                                      multiplier_style=0.05,
                                      multiplier_human=1.0):
     if style_model_path is None:
-        model_dir = snapshot_download('Cherrytest/zjz_mj_jiyi_small_addtxt_fromleo', revision='v1.0.0')
+        model_dir = snapshot_download_dk('Cherrytest/zjz_mj_jiyi_small_addtxt_fromleo', revision='v1.0.0')
         style_model_path = os.path.join(model_dir, 'zjz_mj_jiyi_small_addtxt_fromleo.safetensors')
 
     segmentation_pipeline = pipeline(Tasks.image_segmentation, 'damo/cv_resnet101_image-multiple-human-parsing')
     det_pipeline = pipeline(Tasks.face_detection, 'damo/cv_ddsar_face-detection_iclr23-damofd')
-    model_dir = snapshot_download('damo/face_chain_control_model', revision='v1.0.1')
-    model_dir1 = snapshot_download('ly261666/cv_wanx_style_model',revision='v1.0.3')
+    model_dir = snapshot_download_dk('damo/face_chain_control_model', revision='v1.0.1')
+    model_dir1 = snapshot_download_dk('ly261666/cv_wanx_style_model',revision='v1.0.3')
 
     if output_img_size == 512:
         dtype = torch.float32
@@ -690,7 +690,7 @@ class GenPortrait_inpaint:
 
     def __call__(self, input_img_dir1=None, input_img_dir2=None, base_model_path=None,
                  lora_model_path1=None, lora_model_path2=None, sub_path=None, revision=None):
-        base_model_path = snapshot_download(base_model_path, revision=revision)
+        base_model_path = snapshot_download_dk(base_model_path, revision=revision)
         if sub_path is not None and len(sub_path) > 0:
             base_model_path = os.path.join(base_model_path, sub_path)
 

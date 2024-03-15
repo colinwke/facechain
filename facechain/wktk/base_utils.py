@@ -94,16 +94,15 @@ class Logger:
             you could answer: https://stackoverflow.com/q/24438976/6494418
                               https://stackoverflow.com/q/19615876/6494418
         """
-        f = _getframe(offset)  # 这个事文件层级, 不是调用的方法层级
-        f = f.f_back  # 这个至少是打印的logging, 所以需要back
+        f = _getframe(offset)  # 这个是文件层级?, 不是调用的方法层级
+        f = f.f_back  # 这个至少是打印的logging, 所以需要back一级(call inner PF.p())
         ret = (None, None)
-        # print(('\n' * 3) + 'C_FILE_ROOT_DIR: %s' % C_FILE_ROOT_DIR)
-
+        # print(f'--- {layer_back}')
         while f:
             code = f.f_code
             code_filename = str(code.co_filename)
             b_not_wktk_file = Logger.not_wktk_file(code_filename)
-            # print('[abc] %4d %30s %5s %2d %s' % (f.f_lineno, code.co_name, b_not_wktk_file, layer_back, code.co_filename))
+            # print(f'[layer_back_c] {layer_back:>5} {code.co_name:>30} {b_not_wktk_file!s:>5} {code.co_filename}:{f.f_lineno}')
             if b_not_wktk_file:  # 打印不是wktk下的stack信息
                 # 在<module>(非函数里)的import调用最底层
                 if '<frozen importlib' in code_filename:
@@ -132,7 +131,7 @@ class Logger:
         if isinstance(stack_info, dict):
             layer_back = stack_info.get('layer_back', 0)
             stack_info = stack_info.get('stack_info', False)
-        code, frame = Logger._get_caller(4, layer_back=layer_back)  # why 4?
+        code, frame = Logger._get_caller(offset=4, layer_back=layer_back)  # why default offset=4?
         stack_info_content = None
         if stack_info:
             stack_info_content = '\n'.join(format_stack())
@@ -197,7 +196,6 @@ class Logger:
             https://stackoverflow.com/a/11233293
         """
         logger = getLogger(name)
-        print('[aaa] why not found caller? x1 %s' % name)
         if name not in Logger._LOG_DICT_:
             logger.findCaller = Logger._logger_find_caller_38 if version_info >= (3, 8) else Logger._logger_find_caller
             logger.handlers.clear()
@@ -260,8 +258,14 @@ class PF:
     def p(*args, sep=' ', layer_back=0, prt=None):
         # PF.p(self, *args, sep=' ', end='\n', file=None): # known special case of print
         # PF.info(s, stack_info=dict(layer_back=1))
-        stack_info = False if layer_back == 0 else dict(layer_back=1)
-        msg = sep.join([str(x) for x in args])
+        stack_info = False if layer_back == 0 else dict(layer_back=layer_back)
+        len_args = len(args)
+        if len_args == 0:
+            msg = ''
+        elif len_args == 1:
+            msg = str(args[0])
+        else:
+            msg = sep.join([str(x) for x in args])
 
         msg_prt = msg
         if prt or PF.PRT:  # 打印与上一次打印的间隔

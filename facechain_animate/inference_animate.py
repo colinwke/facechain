@@ -16,7 +16,7 @@ from diffusers import AutoencoderKL, DDIMScheduler, UniPCMultistepScheduler
 from tqdm import tqdm
 from transformers import CLIPTextModel, CLIPTokenizer
 
-from facechain.utils import snapshot_download
+from facechain.utils import snapshot_download_dk
 
 from facechain_animate.magicanimate.models.unet_controlnet import UNet3DConditionModel
 from facechain_animate.magicanimate.models.controlnet import ControlNetModel
@@ -62,9 +62,9 @@ class MagicAnimate():
         func_args = dict(func_args)
 
         ### >>> create animation pipeline >>> ###
-        sd15_model_dir = snapshot_download('AI-ModelScope/stable-diffusion-v1-5')
-        sdvae_model_dir = snapshot_download('zhuzhukeji/sd-vae-ft-mse')
-        magicanimate_model_dir = snapshot_download('AI-ModelScope/MagicAnimate')
+        sd15_model_dir = snapshot_download_dk('AI-ModelScope/stable-diffusion-v1-5')
+        sdvae_model_dir = snapshot_download_dk('zhuzhukeji/sd-vae-ft-mse')
+        magicanimate_model_dir = snapshot_download_dk('AI-ModelScope/MagicAnimate')
 
         tokenizer = CLIPTokenizer.from_pretrained(sd15_model_dir, subfolder="tokenizer")
         text_encoder = CLIPTextModel.from_pretrained(sd15_model_dir, subfolder="text_encoder")

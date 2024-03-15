@@ -14,7 +14,7 @@ import imageio
 import torch
 from glob import glob
 import platform
-from facechain.utils import snapshot_download, check_ffmpeg, set_spawn_method, project_dir, join_worker_data_dir
+from facechain.utils import snapshot_download_dk, check_ffmpeg, set_spawn_method, project_dir, join_worker_data_dir
 
 from facechain_animate.inference_animate import MagicAnimate
 from facechain_animate.inference_densepose import DensePose

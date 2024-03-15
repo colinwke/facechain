@@ -59,7 +59,7 @@ import sys
 parent_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if parent_path not in sys.path:
     sys.path.append(parent_path)
-from facechain.utils import snapshot_download
+from facechain.utils import snapshot_download_dk
 from modelscope.utils.import_utils import is_swift_available
 
 from packaging import version
@@ -145,7 +145,7 @@ def softmax(x):
 
 
 def get_rot(image):
-    model_dir = snapshot_download('Cherrytest/rot_bgr',
+    model_dir = snapshot_download_dk('Cherrytest/rot_bgr',
                                   revision='v1.0.0')
     model_path = os.path.join(model_dir, 'rot_bgr.onnx')
     providers = ['CPUExecutionProvider']
@@ -594,7 +594,7 @@ def main():
             ).repo_id
 
     ## Download foundation Model
-    model_dir = snapshot_download(args.pretrained_model_name_or_path,
+    model_dir = snapshot_download_dk(args.pretrained_model_name_or_path,
                                   revision=args.revision,
                                   user_agent={'invoked_by': 'trainer', 'third_party': 'facechain'})
 
@@ -1050,7 +1050,7 @@ def main():
     # Potentially load in the weights and states from a previous save
     if args.resume_from_checkpoint:
         if args.resume_from_checkpoint == 'fromfacecommon':
-            weight_model_dir = snapshot_download('damo/face_frombase_c4',
+            weight_model_dir = snapshot_download_dk('damo/face_frombase_c4',
                                                  revision='v1.0.0',
                                                  user_agent={'invoked_by': 'trainer', 'third_party': 'facechain'})
             path = os.path.join(weight_model_dir, 'face_frombase_c4.bin')

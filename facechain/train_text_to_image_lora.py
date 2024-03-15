@@ -27,6 +27,10 @@ import sys
 from pathlib import Path
 from typing import Tuple
 
+from init_project_env import init_env, project_dir
+
+init_env()
+
 import PIL.Image
 import cv2
 import datasets
@@ -42,8 +46,8 @@ from accelerate import Accelerator
 from accelerate.logging import get_logger
 from accelerate.utils import ProjectConfiguration, set_seed
 from datasets import load_dataset
-from diffusers import (AutoencoderKL, DDPMScheduler, DiffusionPipeline,
-                       UNet2DConditionModel)
+from diffusers import (
+    AutoencoderKL, DDPMScheduler, DiffusionPipeline, UNet2DConditionModel)
 from diffusers.loaders import AttnProcsLayers
 from diffusers.models.attention_processor import LoRAAttnProcessor
 from diffusers.optimization import get_scheduler
@@ -52,12 +56,12 @@ from diffusers.utils.import_utils import is_xformers_available
 from huggingface_hub import create_repo, upload_folder
 from torch import Tensor
 
-from facechain.wktk.base_utils import Timestamp
+from facechain.wktk.base_utils import Timestamp, PF
 
 parent_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if parent_path not in sys.path:
     sys.path.append(parent_path)
-from facechain.utils import snapshot_download
+from facechain.utils import snapshot_download_dk
 from modelscope.utils.import_utils import is_swift_available
 
 from packaging import version
@@ -73,6 +77,7 @@ from facechain.inference import data_process_fn
 check_min_version("0.14.0.dev0")
 
 logger = get_logger(__name__, log_level="INFO")
+PF.p('[__name__] ==', __name__)
 
 
 class FaceCrop(torch.nn.Module):
@@ -143,8 +148,7 @@ def softmax(x):
 
 
 def get_rot(image):
-    model_dir = snapshot_download('Cherrytest/rot_bgr',
-                                  revision='v1.0.0')
+    model_dir = snapshot_download_dk('Cherrytest/rot_bgr', revision='v1.0.0')
     model_path = os.path.join(model_dir, 'rot_bgr.onnx')
     providers = ['CPUExecutionProvider']
     if torch.cuda.is_available():
@@ -510,7 +514,35 @@ def parse_args():
         "--enable_xformers_memory_efficient_attention", action="store_true", help="Whether or not to use xformers."
     )
 
-    args = parser.parse_args()
+    # default args for parser
+    args_spec_list = None
+    if len(sys.argv) <= 1:
+        args_spec_list = """
+--pretrained_model_name_or_path=ly261666/cv_portrait_model
+--revision=v2.0
+--sub_path=film/film
+--dataset_name=./imgs
+--output_dataset_name=./processed
+--caption_column=text
+--resolution=512
+--random_flip
+--train_batch_size=1
+--num_train_epochs=200
+--checkpointing_steps=5000
+--learning_rate=1.5e-04
+--lr_scheduler=cosine
+--lr_warmup_steps=0
+--seed=42
+--output_dir=./output
+--lora_r=4
+--lora_alpha=32
+--lora_text_encoder_r=32
+--lora_text_encoder_alpha=32
+--resume_from_checkpoint=fromfacecommon
+            """
+        args_spec_list = [x.strip() for x in args_spec_list.split('\n') if x.strip()]
+
+    args = parser.parse_args(args=args_spec_list)
     env_local_rank = int(os.environ.get("LOCAL_RANK", -1))
     if env_local_rank != -1 and env_local_rank != args.local_rank:
         args.local_rank = env_local_rank
@@ -527,7 +559,8 @@ DATASET_NAME_MAPPING = {
 }
 
 
-def main():
+def main_training():
+    multiprocessing.set_start_method('spawn', force=True)
     ts = Timestamp()
 
     args = parse_args()
@@ -564,7 +597,8 @@ def main():
 
     # Make one log on every process with the configuration for debugging.
     logging.basicConfig(
-        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+        # format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+        format="[%(asctime)s] [{N}] \"%(filename)s:%(lineno)d\" %(message)s".format(N='N'),
         datefmt="%m/%d/%Y %H:%M:%S",
         level=logging.INFO,
     )
@@ -593,9 +627,11 @@ def main():
             ).repo_id
 
     ## Download foundation Model
-    model_dir = snapshot_download(args.pretrained_model_name_or_path,
-                                  revision=args.revision,
-                                  user_agent={'invoked_by': 'trainer', 'third_party': 'facechain'})
+    model_dir = snapshot_download_dk(
+        args.pretrained_model_name_or_path,
+        revision=args.revision,
+        user_agent={'invoked_by': 'trainer', 'third_party': 'facechain'}
+    )
 
     if args.sub_path is not None and len(args.sub_path) > 0:
         model_dir = os.path.join(model_dir, args.sub_path)
@@ -952,9 +988,9 @@ def main():
     # Potentially load in the weights and states from a previous save
     if args.resume_from_checkpoint:
         if args.resume_from_checkpoint == 'fromfacecommon':
-            weight_model_dir = snapshot_download('damo/face_frombase_c4',
-                                                 revision='v1.0.0',
-                                                 user_agent={'invoked_by': 'trainer', 'third_party': 'facechain'})
+            weight_model_dir = snapshot_download_dk('damo/face_frombase_c4',
+                                                    revision='v1.0.0',
+                                                    user_agent={'invoked_by': 'trainer', 'third_party': 'facechain'})
             path = os.path.join(weight_model_dir, 'face_frombase_c4.bin')
         elif args.resume_from_checkpoint != "latest":
             path = os.path.basename(args.resume_from_checkpoint)
@@ -1228,5 +1264,4 @@ def main():
 
 
 if __name__ == "__main__":
-    multiprocessing.set_start_method('spawn', force=True)
-    main()
+    main_training()

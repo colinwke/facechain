@@ -19,7 +19,7 @@ from PIL import Image
 from omegaconf import OmegaConf
 from collections import OrderedDict
 
-from facechain.utils import snapshot_download
+from facechain.utils import snapshot_download_dk
 
 import torch
 import torch.distributed as dist
@@ -73,9 +73,9 @@ def main(args):
         
     
     ### >>> create animation pipeline >>> ###
-    sd15_model_dir = snapshot_download('AI-ModelScope/stable-diffusion-v1-5')
-    sdvae_model_dir = snapshot_download('zhuzhukeji/sd-vae-ft-mse')
-    magicanimate_model_dir = snapshot_download('AI-ModelScope/MagicAnimate')
+    sd15_model_dir = snapshot_download_dk('AI-ModelScope/stable-diffusion-v1-5')
+    sdvae_model_dir = snapshot_download_dk('zhuzhukeji/sd-vae-ft-mse')
+    magicanimate_model_dir = snapshot_download_dk('AI-ModelScope/MagicAnimate')
 
     tokenizer = CLIPTokenizer.from_pretrained(sd15_model_dir, subfolder="tokenizer")
     text_encoder = CLIPTextModel.from_pretrained(sd15_model_dir, subfolder="text_encoder")

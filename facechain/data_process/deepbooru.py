@@ -6,6 +6,8 @@ import re
 from PIL import Image
 import numpy as np
 
+from facechain.utils import snapshot_download_dk
+
 re_special = re.compile(r'([\\()])')
 
 import torch
@@ -718,7 +720,7 @@ class DeepDanbooru:
         self.model = DeepDanbooruModel()
 
         foundation_model_id = 'ly261666/cv_portrait_model'
-        snapshot_path = snapshot_download(foundation_model_id, revision='v4.0')
+        snapshot_path = snapshot_download_dk(foundation_model_id, revision='v4.0')
         pretrain_model_path = os.path.join(snapshot_path, 'model-resnet_custom_v3.pt')
 
         self.model.load_state_dict(torch.load(pretrain_model_path, map_location="cpu"))
