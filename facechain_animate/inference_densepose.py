@@ -26,7 +26,7 @@ class DensePose():
         cfg = get_cfg()
         add_densepose_config(cfg)
         cfg.merge_from_file("facechain_animate/densepose/configs/densepose_rcnn_R_50_FPN_s1x.yaml")
-        cfg.MODEL.WEIGHTS = os.path.join(snapshot_download('eavesy/vid2densepose'), "model_final_162be9.pkl")
+        cfg.MODEL.WEIGHTS = os.path.join(snapshot_download_dk('eavesy/vid2densepose'), "model_final_162be9.pkl")
         cfg.MODEL.DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
         self.cfg = cfg
 

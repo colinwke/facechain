@@ -12,12 +12,12 @@ from facechain.wktk.base_utils import PF
 project_dir = os.path.dirname(os.path.abspath(__file__))
 
 PF.p('\n' * 20)
-os.environ["MODELSCOPE_CACHE"] = f"{project_dir}/input/cache/modelscope/hub"
-print('[os.environ["MODELSCOPE_CACHE"]] ', os.environ["MODELSCOPE_CACHE"])
+# os.environ["MODELSCOPE_CACHE"] = f"{project_dir}/input/cache2/modelscope/hub"
+# os.environ["MODELSCOPE_CACHE"] = f"{project_dir}/input/cache"
 print('[project_dir] ', project_dir)
 
 
-def config_logging(log_name='root', log_file=None):
+def config_logger(log_name='root', log_file=None):
     """https://stackoverflow.com/a/44296581/6494418
     # modelscope getLogger
         - modelscope.utils.logger.get_logger
@@ -28,7 +28,10 @@ def config_logging(log_name='root', log_file=None):
     logger.setLevel(logging.INFO)
 
     # create formatter and add it to the handlers
-    formatter = logging.Formatter("[%(asctime)s] [{N}] \"%(filename)s:%(lineno)d\" %(message)s".format(N=log_name))
+    # https://stackoverflow.com/a/533077/6494418
+    log_format = "[%(asctime)s] [{N}] %(pathname)s %(module)s \"%(filename)s:%(lineno)d\" %(message)s".format(N=log_name)
+    formatter = logging.Formatter(log_format)
+    logging.basicConfig(format=log_format)
 
     class NoDeprecatedFilter(logging.Filter):
         def filter(self, record):
@@ -51,5 +54,5 @@ def config_logging(log_name='root', log_file=None):
 
 
 def init_env():
-    config_logging('root')
-    config_logging('modelscope')
+    config_logger('root')  # worked
+    config_logger('modelscope')  # not work with base??

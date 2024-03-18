@@ -1,32 +1,41 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import torch
 import os
 import re
 from collections import defaultdict
-from safetensors.torch import load_file
+
+import torch
 from modelscope.utils.import_utils import is_swift_available
+from safetensors.torch import load_file
+
+from facechain.wktk.base_utils import *
 
 
 def merge_lora(pipeline, lora_path, multiplier, from_safetensor=False, device='cpu', dtype=torch.float32):
     LORA_PREFIX_UNET = "lora_unet"
     LORA_PREFIX_TEXT_ENCODER = "lora_te"
-    print ('----------')
-    print ('Lora Path: ', lora_path)
+    print('----------')
+    PF.p(f"lora_path={lora_path}, from_safetensor={from_safetensor}, device={device}")
+    print('Lora Path: ', lora_path)
     if from_safetensor:
+        PF.p(f'[from_safetensor] device={device}')
         state_dict = load_file(lora_path, device=device)
     elif os.path.exists(os.path.join(lora_path, 'swift')):
+        PF.p(f"[os.path.exists(os.path.join(lora_path, 'swift'))] {os.path.exists(os.path.join(lora_path, 'swift'))}")
         if not is_swift_available():
-                    raise ValueError(
-                        'Please install swift by `pip install ms-swift` to use efficient_tuners.'
-                    )
+            raise ValueError(
+                'Please install swift by `pip install ms-swift` to use efficient_tuners.'
+            )
         from swift import Swift
         pipeline.unet = Swift.from_pretrained(pipeline.unet, os.path.join(lora_path, 'swift'))
         return pipeline
     else:
+        PF.p('[else condition] -')
         if os.path.exists(os.path.join(lora_path, 'pytorch_lora_weights.bin')):
+            PF.p(f"[else condition] 1 {os.path.join(lora_path, 'pytorch_lora_weights.bin')}")
             checkpoint = torch.load(os.path.join(lora_path, 'pytorch_lora_weights.bin'), map_location=torch.device(device))
         elif os.path.exists(os.path.join(lora_path, 'pytorch_lora_weights.safetensors')):
-            checkpoint= load_file(os.path.join(lora_path,'pytorch_lora_weights.safetensors'), device=device)
+            PF.p(f"[else condition] 1 {os.path.join(lora_path, 'pytorch_lora_weights.safetensors')}")
+            checkpoint = load_file(os.path.join(lora_path, 'pytorch_lora_weights.safetensors'), device=device)
         new_dict = dict()
         for idx, key in enumerate(checkpoint):
             new_key = re.sub(r'\.processor\.', '_', key)

@@ -13,7 +13,6 @@ re_special = re.compile(r'([\\()])')
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from modelscope.hub.snapshot_download import snapshot_download
 
 # see https://github.com/AUTOMATIC1111/TorchDeepDanbooru for more
 LANCZOS = (Image.Resampling.LANCZOS if hasattr(Image, 'Resampling') else Image.LANCZOS)

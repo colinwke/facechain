@@ -27,7 +27,7 @@ import sys
 from pathlib import Path
 from typing import Tuple
 
-from init_project_env import init_env, project_dir
+from init_project_env import init_env, config_logger
 
 init_env()
 
@@ -568,6 +568,10 @@ def main_training():
     shutil.rmtree(args.output_dir, ignore_errors=True)
     os.makedirs(args.output_dir)
 
+    PF.print_dict(logging.root.manager.loggerDict, title='logging.root.manager.loggerDict')
+    config_logger('modelscope')
+    # PF.exit(1)
+
     if args.dataset_name is not None:
         # if dataset_name is None, then it's called from the gradio
         # the data processing will be executed in the app.py to save the gpu memory.
@@ -633,21 +637,22 @@ def main_training():
         user_agent={'invoked_by': 'trainer', 'third_party': 'facechain'}
     )
 
+    PF.p('[model_dir1]', model_dir)
+
     if args.sub_path is not None and len(args.sub_path) > 0:
         model_dir = os.path.join(model_dir, args.sub_path)
 
+    PF.p('[model_dir2]', model_dir)
     # Load scheduler, tokenizer and models.
     noise_scheduler = DDPMScheduler.from_pretrained(model_dir, subfolder="scheduler")
-    tokenizer = CLIPTokenizer.from_pretrained(
-        model_dir, subfolder="tokenizer"
-    )
-    text_encoder = CLIPTextModel.from_pretrained(
-        model_dir, subfolder="text_encoder"
-    )
+    tokenizer = CLIPTokenizer.from_pretrained(model_dir, subfolder="tokenizer")
+    text_encoder = CLIPTextModel.from_pretrained(model_dir, subfolder="text_encoder")
     vae = AutoencoderKL.from_pretrained(model_dir, subfolder="vae")
-    unet = UNet2DConditionModel.from_pretrained(
-        model_dir, subfolder="unet"
-    )
+
+    # 这里直接使用 `unet = UNet2DConditionModel.from_pretrained(model_dir, subfolder="unet")`
+    # 本地读取(非默认snapshot_download)其中的`diffusion_pytorch_model.bin`, 导致读取的模型不全
+    # 所以这里需要指定路径??
+    unet = UNet2DConditionModel.from_pretrained(model_dir, subfolder="unet")
 
     # For mixed precision training we cast the text_encoder and vae weights to half-precision
     # as these models are only used for inference, keeping weights in full precision is not required.

@@ -9,8 +9,10 @@ from modelscope import snapshot_download as ms_snapshot_download
 
 from facechain.wktk.base_utils import PF
 
-
 project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PF.p(f'[project_dir] {project_dir}')
+PF.p(f"[os.path.abspath(./)] {os.path.abspath('./')}")
+PF.p(f"[__file__] {__file__}")
 
 
 # os.environ["MODELSCOPE_CACHE"] = f"{project_dir}/input/cache/modelscope/hub3"
@@ -37,15 +39,30 @@ def max_retries(max_attempts):
 @max_retries(1)
 def snapshot_download_dk(model_id, revision, cache_dir=None, user_agent=None):
     # from modelscope.hub.snapshot_download import snapshot_download
-    PF.p('[snapshot_download_dk] ', model_id, revision, cache_dir, layer_back=2)
+    PF.p('[snapshot_download_dk.1]', model_id, revision, cache_dir, layer_back=2)
     # /code/dkc/facechain-main/input/cache/modelscope/hub/Cherrytest/rot_bgr
-    model_dir = f'{project_dir}/input/cache/modelscope/hub/{model_id}'
+    # model_dir = f'{project_dir}/input/cache/modelscope/hub/{model_id}'
+    # WPAI离线训练不支持访问外网, 抛出错误`Network is unreachable`, 则直接使用本地路径
+    cache_dir = None
+    cache_dir = f'{project_dir}/input/cache/modelscope/hub/'  # 如果没哟指定`cache_dir`, 则会生成读取默认的`cache_dir`, 其中的一部分包含了`MODELSCOPE_CACHE`
+    # cache_dir = f'./input4/cache/modelscope/hub/'  # 如果没哟指定`cache_dir`, 则会生成读取默认的`cache_dir`, 其中的一部分包含了`MODELSCOPE_CACHE`
+    # cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../', 'input3/cache/modelscope/hub')
+
+    if 'MODELSCOPE_CACHE' in os.environ:
+        print('[os.environ["MODELSCOPE_CACHE"]] ', os.environ["MODELSCOPE_CACHE"])
+
+    model_dir = ms_snapshot_download(
+        model_id=model_id,
+        revision=revision,
+        cache_dir=cache_dir,
+        user_agent=user_agent,
+        local_files_only=False
+    )
     # try:
-    #     # WPAI离线训练不支持访问外网, 抛出错误`Network is unreachable`, 则直接使用本地路径
-    #     model_dir = ms_snapshot_download(model_id=model_id, revision=revision, cache_dir=cache_dir, user_agent=user_agent)
+    #     pass
     # except:
     #     pass
-    PF.p('[snapshot_download_dk] model_dir', model_dir, layer_back=2)
+    PF.p('[snapshot_download_dk.2] model_dir', model_dir, layer_back=2)
     return model_dir
 
 

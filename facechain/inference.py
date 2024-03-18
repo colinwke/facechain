@@ -7,8 +7,9 @@ import numpy as np
 import torch
 from PIL import Image
 from controlnet_aux import OpenposeDetector
-from diffusers import StableDiffusionPipeline, StableDiffusionControlNetPipeline, ControlNetModel, \
-    UniPCMultistepScheduler, DPMSolverSinglestepScheduler, StableDiffusionXLPipeline
+from diffusers import (
+    StableDiffusionPipeline, StableDiffusionControlNetPipeline, ControlNetModel,
+    UniPCMultistepScheduler, DPMSolverSinglestepScheduler, StableDiffusionXLPipeline)
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
@@ -19,6 +20,7 @@ from transformers import pipeline as tpipeline
 from facechain.data_process.preprocessing import Blipv2
 from facechain.merge_lora import merge_lora
 from facechain.utils import snapshot_download_dk
+from facechain.wktk.base_utils import PF
 
 
 def _data_process_fn_process(input_img_dir):
@@ -185,7 +187,7 @@ def main_diffusion_inference(
 
     lora_style_path = style_model_path
     lora_human_path = lora_model_path
-    print('lora_human_path: ', lora_human_path)
+    PF.p(f'[lora_human_path] {lora_human_path}')
     if 'xl-base' in base_model_path:
         pipe = StableDiffusionXLPipeline.from_pretrained(base_model_path, safety_checker=None, torch_dtype=torch.float16)
         if use_lcm:
@@ -298,11 +300,25 @@ def main_diffusion_inference(
     pipe = pipe.to("cuda")
 
     if 'xl-base' in base_model_path:
-        images_style = txt2img(pipe, trigger_style + add_prompt_style + pos_prompt, neg_prompt, num_images=10, height=768, width=768,
-                               num_inference_steps=num_inference_steps, guidance_scale=guidance_scale)
+        images_style = txt2img(
+            pipe,
+            trigger_style + add_prompt_style + pos_prompt,
+            neg_prompt,
+            num_images=10,
+            height=768,
+            width=768,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale
+        )
     else:
-        images_style = txt2img(pipe, trigger_style + add_prompt_style + pos_prompt, neg_prompt, num_images=10, num_inference_steps=num_inference_steps,
-                               guidance_scale=guidance_scale)
+        images_style = txt2img(
+            pipe,
+            trigger_style + add_prompt_style + pos_prompt,
+            neg_prompt,
+            num_images=10,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale
+        )
     return images_style
 
 
@@ -474,7 +490,7 @@ def main_diffusion_inference_multi(
 
     for tag in tags_all:
         if tags_all.count(tag) > 0.5 * cnt:
-            if ('hair' in tag or 'face' in tag or 'mouth' in tag or 'skin' in tag or 'smile' in tag):
+            if 'hair' in tag or 'face' in tag or 'mouth' in tag or 'skin' in tag or 'smile' in tag:
                 if not tag in add_prompt_style:
                     add_prompt_style.append(tag)
 
