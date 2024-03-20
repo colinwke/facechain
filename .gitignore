@@ -13,6 +13,7 @@ None.*
 /resources*
 /poses*
 /input*
+/processor_*.py
 
 # ----------------------------------------------------------------
 # wk common default

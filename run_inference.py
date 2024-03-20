@@ -53,12 +53,12 @@ def main_predict():
     use_depth_control = False
     use_pose_model = False
     pose_image = 'poses/man/pose1.png'
-    processed_dir = './processed'
+    processed_dir = './data/cache_imei/a_spec_imei/output_processed'
     num_generate = 5
     multiplier_style = 0.25
     multiplier_human = 0.85
-    train_output_dir = './output'
-    output_dir = './generated'
+    train_output_dir = './data/cache_imei/a_spec_imei/output_train'
+    output_dir = './data/cache_imei/a_spec_imei/output_generated'
     base_model = base_models[0]
     style = styles[0]
     model_id = style['model_id']

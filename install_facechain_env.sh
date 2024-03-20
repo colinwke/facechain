@@ -7,11 +7,10 @@
 # ----------------------------------------------------------------
 USAGE=$( # this is a block comment
     cat <<'EOF'
-# script="install_facechain_env.sh"; mkdir -p /tmp && cd /tmp && hadoop fs -get /home/hdp_lbg_ectech/resultdata/wangke/script/a/${script}.sh && /bin/bash ${script}.sh
 mkdir -p /tmp && cd /tmp && hadoop fs -get /home/hdp_lbg_ectech/resultdata/wangke/script/a/install_facechain_env.sh && /bin/bash install_facechain_env.sh
 
-
 rsync -avz dk@10.253.69.198::dk/working/facechain/install_facechain_env.sh .
+hrmr /home/hdp_lbg_ectech/resultdata/wangke/script/a/install_facechain_env.sh
 hadoop fs -put install_facechain_env.sh /home/hdp_lbg_ectech/resultdata/wangke/script/a/
 hld /home/hdp_lbg_ectech/resultdata/wangke/script/a/
 
@@ -23,9 +22,9 @@ EOF
 #python -m pip install -U pip
 
 pip install --upgrade pip
-yes | pip3 uninstall torch
-yes | pip3 uninstall torchvision
-yes | pip3 uninstall torchaudio
+#yes | pip3 uninstall torch
+#yes | pip3 uninstall torchvision
+#yes | pip3 uninstall torchaudio
 yes | pip3 uninstall accelerate
 yes | pip3 uninstall transformers
 yes | pip3 uninstall onnxruntime
@@ -55,7 +54,7 @@ pip3 install chromadb continuedev pandas pywavelets vllm xformers
 # mmcv-full (need mim install)
 pip3 install protobuf==3.20.1
 pip3 install scikit-image==0.19.3
-pip3 install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2
+#pip3 install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2
 
 pip3 install gradio==3.50.2
 pip3 install controlnet_aux==0.0.6

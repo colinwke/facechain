@@ -218,7 +218,7 @@ install mmcv-full by pip: pip3 install mmcv-full
 FaceChain supports direct training and inference in the python environment. Run the following command in the cloned folder to start training:
 
 ```shell
-PYTHONPATH=. sh train_lora.sh "ly261666/cv_portrait_model" "v2.0" "film/film" "./imgs" "./processed" "./output"
+PYTHONPATH=. sh train_lora.sh "ly261666/cv_portrait_model" "v2.0" "film/film" "./data/cache_imei/a_spec_imei/input_img" "./data/cache_imei/a_spec_imei/output_processed" "./data/cache_imei/a_spec_imei/output_train"
 ```
 
 Parameters description:
@@ -227,9 +227,9 @@ Parameters description:
 ly261666/cv_portrait_model: The stable diffusion base model of the ModelScope model hub, which will be used for training, no need to be changed.
 v2.0: The version number of this base model, no need to be changed
 film/film: This base model may contains multiple subdirectories of different styles, currently we use film/film, no need to be changed
-./imgs: This parameter needs to be replaced with the actual value. It means a local file directory that contains the original photos used for training and generation
-./processed: The folder of the processed images after preprocessing, this parameter needs to be passed the same value in inference, no need to be changed
-./output: The folder where the model weights stored after training, no need to be changed
+./data/cache_imei/a_spec_imei/input_img: This parameter needs to be replaced with the actual value. It means a local file directory that contains the original photos used for training and generation
+./data/cache_imei/a_spec_imei/output_processed: The folder of the processed images after preprocessing, this parameter needs to be passed the same value in inference, no need to be changed
+./data/cache_imei/a_spec_imei/output_train: The folder where the model weights stored after training, no need to be changed
 ```
 
 Wait for 5-20 minutes to complete the training. Users can also adjust other training hyperparameters. The hyperparameters supported by training can be viewed in the file of `train_lora.sh`, or the complete hyperparameter list in `facechain/train_text_to_image_lora.py`.
@@ -244,7 +244,7 @@ use_pose_model = False
 # The path of the image for pose control, only effective when using pose control
 pose_image = 'poses/man/pose1.png'
 # Fill in the folder of the images after preprocessing above, it should be the same as during training
-processed_dir = './processed'
+processed_dir = './data/cache_imei/a_spec_imei/output_processed'
 # The number of images to generate in inference
 num_generate = 5
 # The stable diffusion base model used in training, no need to be changed
@@ -254,9 +254,9 @@ revision = 'v2.0'
 # This base model may contains multiple subdirectories of different styles, currently we use film/film, no need to be changed
 base_model_sub_dir = 'film/film'
 # The folder where the model weights stored after training, it must be the same as during training
-train_output_dir = './output'
+train_output_dir = './data/cache_imei/a_spec_imei/output_train'
 # Specify a folder to save the generated images, this parameter can be modified as needed
-output_dir = './generated'
+output_dir = './data/cache_imei/a_spec_imei/output_generated'
 # Use Chinese style model, default False
 use_style = False
 ```

@@ -223,7 +223,7 @@ python3 app.py
 如果不想启动服务，而是直接在命令行进行开发调试等工作，FaceChain也支持在python环境中直接运行脚本进行训练和推理。在克隆后的文件夹中直接运行如下命令来进行训练：
 
 ```shell
-PYTHONPATH=. sh train_lora.sh "ly261666/cv_portrait_model" "v2.0" "film/film" "./imgs" "./processed" "./output"
+PYTHONPATH=. sh train_lora.sh "ly261666/cv_portrait_model" "v2.0" "film/film" "./data/cache_imei/a_spec_imei/input_img" "./data/cache_imei/a_spec_imei/output_processed" "./data/cache_imei/a_spec_imei/output_train"
 ```
 
 参数含义：
@@ -232,9 +232,9 @@ PYTHONPATH=. sh train_lora.sh "ly261666/cv_portrait_model" "v2.0" "film/film" ".
 ly261666/cv_portrait_model: ModelScope模型仓库的stable diffusion基模型，该模型会用于训练，可以不修改
 v2.0: 该基模型的版本号，可以不修改
 film/film: 该基模型包含了多个不同风格的子目录，其中使用了film/film目录中的风格模型，可以不修改
-./imgs: 本参数需要用实际值替换，本参数是一个本地文件目录，包含了用来训练和生成的原始照片
-./processed: 预处理之后的图片文件夹，这个参数需要在推理中被传入相同的值，可以不修改
-./output: 训练生成保存模型weights的文件夹，可以不修改
+./data/cache_imei/a_spec_imei/input_img: 本参数需要用实际值替换，本参数是一个本地文件目录，包含了用来训练和生成的原始照片
+./data/cache_imei/a_spec_imei/output_processed: 预处理之后的图片文件夹，这个参数需要在推理中被传入相同的值，可以不修改
+./data/cache_imei/a_spec_imei/output_train: 训练生成保存模型weights的文件夹，可以不修改
 ```
 
 等待5-20分钟即可训练完成。用户也可以调节其他训练超参数，训练支持的超参数可以查看`train_lora.sh`的配置，或者`facechain/train_text_to_image_lora.py`中的完整超参数列表。
@@ -249,7 +249,7 @@ use_pose_model = False
 # 姿态控制图片路径，仅在使用姿态控制时生效
 pose_image = 'poses/man/pose1.png'
 # 填入上述的预处理之后的图片文件夹，需要和训练时相同
-processed_dir = './processed'
+processed_dir = './data/cache_imei/a_spec_imei/output_processed'
 # 推理生成的图片数量
 num_generate = 5
 # 训练时使用的stable diffusion基模型，可以不修改
@@ -259,9 +259,9 @@ revision = 'v2.0'
 # 该基模型包含了多个不同风格的子目录，其中使用了film/film目录中的风格模型，可以不修改
 base_model_sub_dir = 'film/film'
 # 训练生成保存模型weights的文件夹，需要保证和训练时相同
-train_output_dir = './output'
+train_output_dir = './data/cache_imei/a_spec_imei/output_train'
 # 指定一个保存生成的图片的文件夹，本参数可以根据需要修改
-output_dir = './generated'
+output_dir = './data/cache_imei/a_spec_imei/output_generated'
 # 使用凤冠霞帔风格模型，默认False
 use_style = False
 ```

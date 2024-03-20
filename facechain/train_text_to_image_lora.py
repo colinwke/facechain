@@ -27,7 +27,7 @@ import sys
 from pathlib import Path
 from typing import Tuple
 
-from init_project_env import init_env, config_logger
+from init_project_env import init_env
 
 init_env()
 
@@ -521,8 +521,8 @@ def parse_args():
 --pretrained_model_name_or_path=ly261666/cv_portrait_model
 --revision=v2.0
 --sub_path=film/film
---dataset_name=./imgs
---output_dataset_name=./processed
+--dataset_name=./data/cache_imei/a_spec_imei/input_img
+--output_dataset_name=./data/cache_imei/a_spec_imei/output_processed
 --caption_column=text
 --resolution=512
 --random_flip
@@ -533,7 +533,7 @@ def parse_args():
 --lr_scheduler=cosine
 --lr_warmup_steps=0
 --seed=42
---output_dir=./output
+--output_dir=./data/cache_imei/a_spec_imei/output_train
 --lora_r=4
 --lora_alpha=32
 --lora_text_encoder_r=32
@@ -554,9 +554,7 @@ def parse_args():
     return args
 
 
-DATASET_NAME_MAPPING = {
-    "lambdalabs/pokemon-blip-captions": ("image", "text"),
-}
+DATASET_NAME_MAPPING = {"lambdalabs/pokemon-blip-captions": ("image", "text"), }
 
 
 def main_training():
@@ -568,8 +566,8 @@ def main_training():
     shutil.rmtree(args.output_dir, ignore_errors=True)
     os.makedirs(args.output_dir)
 
-    PF.print_dict(logging.root.manager.loggerDict, title='logging.root.manager.loggerDict')
-    config_logger('modelscope')
+    # PF.print_dict(logging.root.manager.loggerDict, title='logging.root.manager.loggerDict')
+    # config_logger('modelscope')
     # PF.exit(1)
 
     if args.dataset_name is not None:

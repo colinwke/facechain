@@ -43,8 +43,9 @@ def snapshot_download_dk(model_id, revision, cache_dir=None, user_agent=None):
     # /code/dkc/facechain-main/input/cache/modelscope/hub/Cherrytest/rot_bgr
     # model_dir = f'{project_dir}/input/cache/modelscope/hub/{model_id}'
     # WPAI离线训练不支持访问外网, 抛出错误`Network is unreachable`, 则直接使用本地路径
-    cache_dir = None
-    cache_dir = f'{project_dir}/input/cache/modelscope/hub/'  # 如果没哟指定`cache_dir`, 则会生成读取默认的`cache_dir`, 其中的一部分包含了`MODELSCOPE_CACHE`
+    # cache_dir = None
+    # cache_dir = f'{project_dir}/input/cache/modelscope/hub/'  # 如果没哟指定`cache_dir`, 则会生成读取默认的`cache_dir`, 其中的一部分包含了`MODELSCOPE_CACHE`
+    cache_dir = f'{project_dir}/data/cache_model/modelscope/hub/'  # 如果没哟指定`cache_dir`, 则会生成读取默认的`cache_dir`, 其中的一部分包含了`MODELSCOPE_CACHE`
     # cache_dir = f'./input4/cache/modelscope/hub/'  # 如果没哟指定`cache_dir`, 则会生成读取默认的`cache_dir`, 其中的一部分包含了`MODELSCOPE_CACHE`
     # cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../', 'input3/cache/modelscope/hub')
 
