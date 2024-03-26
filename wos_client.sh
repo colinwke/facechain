@@ -4,7 +4,7 @@
 
 USAGE=$( # this is a block comment
     cat <<'EOF'
-https://docs.58corp.com/#/space/1530209735373017088
+https://docs.58corp.com/#/space/1530209735373017088#wos_doc
 EOF
 )
 

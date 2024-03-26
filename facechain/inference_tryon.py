@@ -2,26 +2,23 @@
 # Modified from the original implementation at https://github.com/modelscope/facechain/pull/104.
 import json
 import os
-import sys
 
 import cv2
 import numpy as np
 import torch
 from PIL import Image
-from skimage import transform
-# from controlnet_aux import OpenposeDetector
-from dwpose import DWposeDetector
-from diffusers import StableDiffusionPipeline, StableDiffusionControlNetPipeline, \
-    StableDiffusionControlNetInpaintPipeline, ControlNetModel, UniPCMultistepScheduler
-from facechain.utils import snapshot_download_dk
+from diffusers import StableDiffusionControlNetInpaintPipeline, ControlNetModel, UniPCMultistepScheduler
 from modelscope.outputs import OutputKeys
-from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
+from skimage import transform
 from torch import multiprocessing
 from transformers import pipeline as tpipeline
 
+# from controlnet_aux import OpenposeDetector
+from dwpose import DWposeDetector
 from facechain.data_process.preprocessing import Blipv2
 from facechain.merge_lora import merge_lora
+from facechain.utils import snapshot_download_dk, pipeline_dk
 
 
 def _data_process_fn_process(input_img_dir):
@@ -145,7 +142,7 @@ def segment(segmentation_pipeline, img, ksize=0, return_human=False, return_clot
         if return_cloth:
             if ksize > 0:
                 kernel = np.ones((ksize, ksize))
-                soft_mask = cv2.erode(mask_cloth, kernel, iterations=1) 
+                soft_mask = cv2.erode(mask_cloth, kernel, iterations=1)
                 return soft_mask
             else:
                 return mask_cloth
@@ -162,7 +159,7 @@ def segment(segmentation_pipeline, img, ksize=0, return_human=False, return_clot
             if ksize > 0:
                 # kernel_size = int(np.sqrt(np.sum(soft_mask)) * ksize)
                 kernel = np.ones((ksize, ksize))
-                soft_mask = cv2.dilate(soft_mask, kernel, iterations=1)               
+                soft_mask = cv2.dilate(soft_mask, kernel, iterations=1)
         else:
             soft_mask = mask_face
 
@@ -195,23 +192,23 @@ def img2img_multicontrol(img, control_image, controlnet_conditioning_scale, pipe
                                 controlnet_conditioning_scale=controlnet_conditioning_scale,
                                 num_images_per_prompt=1).images[0])
         if use_ori:
-            image_human[i] = Image.fromarray((np.array(image_human[i]) * mask[:,:,None] + np.array(img) * (1 - mask[:,:,None])).astype(np.uint8))
+            image_human[i] = Image.fromarray((np.array(image_human[i]) * mask[:, :, None] + np.array(img) * (1 - mask[:, :, None])).astype(np.uint8))
     return image_human
 
 
 def main_diffusion_inference_tryon(inpaint_image, strength, output_img_size, pos_prompt, neg_prompt,
-                                     input_img_dir, base_model_path, style_model_path, lora_model_path,
-                                     multiplier_style=0.05,
-                                     multiplier_human=1.0):
+                                   input_img_dir, base_model_path, style_model_path, lora_model_path,
+                                   multiplier_style=0.05,
+                                   multiplier_human=1.0):
     if style_model_path is None:
         model_dir = snapshot_download_dk('Cherrytest/zjz_mj_jiyi_small_addtxt_fromleo', revision='v1.0.0')
         style_model_path = os.path.join(model_dir, 'zjz_mj_jiyi_small_addtxt_fromleo.safetensors')
 
-    segmentation_pipeline = pipeline(Tasks.image_segmentation, 'damo/cv_resnet101_image-multiple-human-parsing')
-    det_pipeline = pipeline(Tasks.face_detection, 'damo/cv_ddsar_face-detection_iclr23-damofd')
+    segmentation_pipeline = pipeline_dk(Tasks.image_segmentation, 'damo/cv_resnet101_image-multiple-human-parsing')
+    det_pipeline = pipeline_dk(Tasks.face_detection, 'damo/cv_ddsar_face-detection_iclr23-damofd')
     model_dir = snapshot_download_dk('damo/face_chain_control_model', revision='v1.0.1')
     model_dir0 = snapshot_download_dk('damo/face_chain_control_model', revision='v1.0.2')
-    model_dir1 = snapshot_download_dk('ly261666/cv_wanx_style_model',revision='v1.0.3')
+    model_dir1 = snapshot_download_dk('ly261666/cv_wanx_style_model', revision='v1.0.3')
 
     if output_img_size == 512:
         dtype = torch.float32
@@ -250,7 +247,7 @@ def main_diffusion_inference_tryon(inpaint_image, strength, output_img_size, pos
     trigger_style = '(<fcsks>:10), ' + trigger_styles[attr_idx]
     if attr_idx == 2 or attr_idx == 4:
         neg_prompt += ', children'
-    
+
     neg_prompt += ', blurry, blurry background'
 
     for tag in tags_all:
@@ -263,16 +260,16 @@ def main_diffusion_inference_tryon(inpaint_image, strength, output_img_size, pos
         add_prompt_style = ", ".join(add_prompt_style) + ', '
     else:
         add_prompt_style = ''
-    
+
     print(add_prompt_style)
 
-    if isinstance(inpaint_image, str): 
+    if isinstance(inpaint_image, str):
         inpaint_im = Image.open(inpaint_image)
     else:
         inpaint_im = inpaint_image
     inpaint_im = crop_bottom(inpaint_im, output_img_size)
     w, h = inpaint_im.size
-    
+
     dwprocessor = DWposeDetector(os.path.join(model_dir0, 'dwpose_models'))
     openpose_image, handbox = dwprocessor(np.array(inpaint_im, np.uint8), include_body=True, include_hand=True, include_face=False, return_handbox=True)
     openpose_image = Image.fromarray(openpose_image)
@@ -317,7 +314,7 @@ def main_diffusion_inference_tryon(inpaint_image, strength, output_img_size, pos
         read_control = [openpose_image, depth_im, canny_image]
         cloth_mask_warp = segment(segmentation_pipeline, inpaint_im, return_cloth=True, ksize=5)
         cloth_mask = segment(segmentation_pipeline, inpaint_im, return_cloth=True, ksize=15)
-        inpaint_with_mask = (cloth_mask_warp[:,:,None] * np.array(inpaint_im))[:,:,::-1]
+        inpaint_with_mask = (cloth_mask_warp[:, :, None] * np.array(inpaint_im))[:, :, ::-1]
         inpaint_mask = 1.0 - cloth_mask
         cv2.imwrite('inpaint_with_mask_{}.png'.format(i), inpaint_with_mask)
         print('Finishing segmenting images.')
@@ -327,7 +324,8 @@ def main_diffusion_inference_tryon(inpaint_image, strength, output_img_size, pos
 
     for i in range(1):
         soft_cloth_mask_warp = cv2.GaussianBlur(cloth_mask_warp, (5, 5), 0, 0)
-        image_human = (np.array(images_human[i]) * (1.0 - soft_cloth_mask_warp[:,:,None]) + np.array(inpaint_im) * soft_cloth_mask_warp[:,:,None]).astype(np.uint8)
+        image_human = (np.array(images_human[i]) * (1.0 - soft_cloth_mask_warp[:, :, None]) + np.array(inpaint_im) * soft_cloth_mask_warp[:, :, None]).astype(
+            np.uint8)
         images_human[i] = Image.fromarray(image_human)
         images_human[i].save('inference_{}.png'.format(i))
 
@@ -345,13 +343,12 @@ def stylization_fn(use_stylization, rank_results):
 def main_model_inference(inpaint_image, strength, output_img_size,
                          pos_prompt, neg_prompt, style_model_path, multiplier_style, multiplier_human, use_main_model,
                          input_img_dir=None, base_model_path=None, lora_model_path=None):
-
     if use_main_model:
         multiplier_style_kwargs = {'multiplier_style': multiplier_style} if multiplier_style is not None else {}
         multiplier_human_kwargs = {'multiplier_human': multiplier_human} if multiplier_human is not None else {}
         return main_diffusion_inference_tryon(inpaint_image, strength, output_img_size, pos_prompt, neg_prompt,
-                                                input_img_dir, base_model_path, style_model_path, lora_model_path,
-                                                **multiplier_style_kwargs, **multiplier_human_kwargs)
+                                              input_img_dir, base_model_path, style_model_path, lora_model_path,
+                                              **multiplier_style_kwargs, **multiplier_human_kwargs)
 
 
 def select_high_quality_face(input_img_dir):
@@ -359,8 +356,7 @@ def select_high_quality_face(input_img_dir):
     quality_score_list = []
     abs_img_path_list = []
     ## TODO
-    face_quality_func = pipeline(Tasks.face_quality_assessment, 'damo/cv_manual_face-quality-assessment_fqa',
-                                 model_revision='v2.0')
+    face_quality_func = pipeline_dk(Tasks.face_quality_assessment, 'damo/cv_manual_face-quality-assessment_fqa', model_revision='v2.0')
 
     for img_name in os.listdir(input_img_dir):
         if img_name.endswith('jsonl') or img_name.startswith('.ipynb') or img_name.startswith('.safetensors'):
@@ -385,9 +381,8 @@ def face_swap_fn(use_face_swap, gen_results, template_face):
     if use_face_swap:
         ## TODO
         out_img_list = []
-        image_face_fusion = pipeline('face_fusion_torch',
-                                     model='damo/cv_unet_face_fusion_torch', model_revision='v1.0.5')
-        segmentation_pipeline = pipeline(Tasks.image_segmentation, 'damo/cv_resnet101_image-multiple-human-parsing')
+        image_face_fusion = pipeline_dk('face_fusion_torch', model='damo/cv_unet_face_fusion_torch', model_revision='v1.0.5')
+        segmentation_pipeline = pipeline_dk(Tasks.image_segmentation, 'damo/cv_resnet101_image-multiple-human-parsing')
         for img in gen_results:
             result = image_face_fusion(dict(template=img, user=template_face))[OutputKeys.OUTPUT_IMG]
             # face_mask = segment(segmentation_pipeline, img, ksize=10)
@@ -405,10 +400,8 @@ def post_process_fn(use_post_process, swap_results_ori, selected_face, num_gen_i
     if use_post_process:
         sim_list = []
         ## TODO
-        face_recognition_func = pipeline(Tasks.face_recognition, 'damo/cv_ir_face-recognition-ood_rts',
-                                         model_revision='v2.5')
-        face_det_func = pipeline(task=Tasks.face_detection, model='damo/cv_ddsar_face-detection_iclr23-damofd',
-                                 model_revision='v1.1')
+        face_recognition_func = pipeline_dk(Tasks.face_recognition, 'damo/cv_ir_face-recognition-ood_rts', model_revision='v2.5')
+        face_det_func = pipeline_dk(task=Tasks.face_detection, model='damo/cv_ddsar_face-detection_iclr23-damofd', model_revision='v1.1')
         swap_results = swap_results_ori
 
         select_face_emb = face_recognition_func(selected_face)[OutputKeys.IMG_EMBEDDING][0]
@@ -451,7 +444,7 @@ class GenPortrait_tryon:
             base_model_path = os.path.join(base_model_path, sub_path)
 
         gen_results = main_model_inference(self.inpaint_img, self.strength, 768,
-                                           self.pos_prompt, self.neg_prompt, 
+                                           self.pos_prompt, self.neg_prompt,
                                            self.style_model_path, self.multiplier_style, self.multiplier_human,
                                            self.use_main_model, input_img_dir=input_img_dir,
                                            lora_model_path=lora_model_path, base_model_path=base_model_path)
@@ -473,17 +466,19 @@ class GenPortrait_tryon:
 
         return final_gen_results_final
 
+
 def compress_image(input_path, target_size):
     output_path = change_extension_to_jpg(input_path)
 
     image = cv2.imread(input_path)
-    
+
     quality = 95
     try:
         while cv2.imencode('.jpg', image, [cv2.IMWRITE_JPEG_QUALITY, quality])[1].size > target_size:
             quality -= 5
     except:
-        import pdb;pdb.set_trace()
+        import pdb;
+        pdb.set_trace()
 
     compressed_image = cv2.imencode('.jpg', image, [cv2.IMWRITE_JPEG_QUALITY, quality])[1].tostring()
 
@@ -493,7 +488,6 @@ def compress_image(input_path, target_size):
 
 
 def change_extension_to_jpg(image_path):
-
     base_name = os.path.basename(image_path)
     new_base_name = os.path.splitext(base_name)[0] + ".jpg"
 

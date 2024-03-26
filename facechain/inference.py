@@ -11,15 +11,14 @@ from diffusers import (
     StableDiffusionPipeline, StableDiffusionControlNetPipeline, ControlNetModel,
     UniPCMultistepScheduler, DPMSolverSinglestepScheduler, StableDiffusionXLPipeline)
 from modelscope.outputs import OutputKeys
-from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from safetensors.torch import load_file
 from torch import multiprocessing
-from transformers import pipeline as tpipeline
+from transformers import pipeline as transformers_pipeline
 
 from facechain.data_process.preprocessing import Blipv2
 from facechain.merge_lora import merge_lora
-from facechain.utils import snapshot_download_dk
+from facechain.utils import snapshot_download_dk, pipeline_dk
 from facechain.wktk.base_utils import PF
 
 
@@ -434,14 +433,13 @@ def main_diffusion_inference_multi(
     pose_image = img_pad(pose_image)
     openpose = OpenposeDetector.from_pretrained(os.path.join(model_dir, 'model_controlnet/ControlNet'))
     pose_im = openpose(pose_image, include_hand=True)
-    segmentation_pipeline = pipeline(Tasks.image_segmentation,
-                                     'damo/cv_resnet101_image-multiple-human-parsing')
+    segmentation_pipeline = pipeline_dk(Tasks.image_segmentation, 'damo/cv_resnet101_image-multiple-human-parsing')
     result = segmentation_pipeline(pose_image)
     mask_rst = get_mask(result)
     pose_image = np.array(pose_image)
     pose_image = (pose_image * mask_rst).astype(np.uint8)
     pose_image = Image.fromarray(pose_image)
-    depth_estimator = tpipeline('depth-estimation', os.path.join(model_dir, 'model_controlnet/dpt-large'))
+    depth_estimator = transformers_pipeline('depth-estimation', os.path.join(model_dir, 'model_controlnet/dpt-large'))
     depth_im = depth_estimator(pose_image)['depth']
     depth_im = np.array(depth_im)
     depth_im = depth_im[:, :, None]
@@ -581,7 +579,7 @@ def select_high_quality_face(input_img_dir):
     quality_score_list = []
     abs_img_path_list = []
     ## TODO
-    face_quality_func = pipeline(Tasks.face_quality_assessment, 'damo/cv_manual_face-quality-assessment_fqa', model_revision='v2.0')
+    face_quality_func = pipeline_dk(Tasks.face_quality_assessment, 'damo/cv_manual_face-quality-assessment_fqa', model_revision='v2.0')
 
     for img_name in os.listdir(input_img_dir):
         if img_name.endswith('jsonl') or img_name.startswith('.ipynb') or img_name.startswith('.safetensors'):
@@ -606,8 +604,7 @@ def face_swap_fn(use_face_swap, gen_results, template_face):
     if use_face_swap:
         ## TODO
         out_img_list = []
-        image_face_fusion = pipeline('face_fusion_torch',
-                                     model='damo/cv_unet_face_fusion_torch', model_revision='v1.0.3')
+        image_face_fusion = pipeline_dk('face_fusion_torch', model='damo/cv_unet_face_fusion_torch', model_revision='v1.0.3')
         for img in gen_results:
             result = image_face_fusion(dict(template=img, user=template_face))[OutputKeys.OUTPUT_IMG]
             out_img_list.append(result)
@@ -624,8 +621,8 @@ def post_process_fn(use_post_process, swap_results_ori, selected_face, num_gen_i
     if use_post_process:
         sim_list = []
         ## TODO
-        face_recognition_func = pipeline(Tasks.face_recognition, 'damo/cv_ir_face-recognition-ood_rts', model_revision='v2.5')
-        face_det_func = pipeline(task=Tasks.face_detection, model='damo/cv_ddsar_face-detection_iclr23-damofd', model_revision='v1.1')
+        face_recognition_func = pipeline_dk(Tasks.face_recognition, 'damo/cv_ir_face-recognition-ood_rts', model_revision='v2.5')
+        face_det_func = pipeline_dk(task=Tasks.face_detection, model='damo/cv_ddsar_face-detection_iclr23-damofd', model_revision='v1.1')
         swap_results = []
         for img in swap_results_ori:
             result_det = face_det_func(img)
@@ -728,13 +725,13 @@ class GenPortrait:
                                        num_gen_images=num_gen_images)
         # stylization
         final_gen_results = stylization_fn(self.use_stylization, rank_results)
-        sr_pipe = pipeline(Tasks.image_super_resolution, model='damo/cv_rrdb_image-super-resolution')
+        sr_pipe = pipeline_dk(Tasks.image_super_resolution, model='damo/cv_rrdb_image-super-resolution')
         if portrait_stylization_idx is not None:
             out_results = []
             if int(portrait_stylization_idx) == 0:
-                img_cartoon = pipeline(Tasks.image_portrait_stylization, model='damo/cv_unet_person-image-cartoon_compound-models')
+                img_cartoon = pipeline_dk(Tasks.image_portrait_stylization, model='damo/cv_unet_person-image-cartoon_compound-models')
             if int(portrait_stylization_idx) == 1:
-                img_cartoon = pipeline(Tasks.image_portrait_stylization, model='damo/cv_unet_person-image-cartoon-3d_compound-models')
+                img_cartoon = pipeline_dk(Tasks.image_portrait_stylization, model='damo/cv_unet_person-image-cartoon-3d_compound-models')
 
             for i in range(len(final_gen_results)):
                 img = final_gen_results[i]

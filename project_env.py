@@ -9,12 +9,15 @@ import os
 
 from facechain.wktk.base_utils import PF
 
-project_dir = os.path.dirname(os.path.abspath(__file__))
-
+PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
+PF.p(f"[os.path.abspath(./)] {os.path.abspath('./')}", layer_back=1)
+PF.p(f'[        PROJECT_DIR] {PROJECT_DIR}', layer_back=1)
+PF.p(f"[           __file__] {__file__}", layer_back=1)
 PF.p('\n' * 20)
-# os.environ["MODELSCOPE_CACHE"] = f"{project_dir}/input/cache2/modelscope/hub"
-# os.environ["MODELSCOPE_CACHE"] = f"{project_dir}/input/cache"
-print('[project_dir] ', project_dir)
+
+# MODELSCOPE_CACHE = f"{PROJECT_DIR}/data/cache_model/modelscope/hub"
+MODELSCOPE_CACHE = f"./"  # 避免预训练模型里包含其他预训练模型(wrapper.py)导致下载后路径加载失败
+os.environ["MODELSCOPE_CACHE"] = MODELSCOPE_CACHE
 
 
 def config_logger(log_name='root', log_file=None):
@@ -29,7 +32,8 @@ def config_logger(log_name='root', log_file=None):
 
     # create formatter and add it to the handlers
     # https://stackoverflow.com/a/533077/6494418
-    log_format = "[%(asctime)s] [{N}] %(pathname)s %(module)s \"%(filename)s:%(lineno)d\" %(message)s".format(N=log_name)
+    # log_format = "[%(asctime)s] [{N}] %(pathname)s %(module)s \"%(filename)s:%(lineno)d\" %(message)s".format(N=log_name)
+    log_format = "[%(asctime)s] [{N}] \"%(pathname)s:%(lineno)d\" %(message)s".format(N=log_name)
     formatter = logging.Formatter(log_format)
     logging.basicConfig(format=log_format)
 
@@ -50,7 +54,7 @@ def config_logger(log_name='root', log_file=None):
         fh.setFormatter(formatter)
         logger.addHandler(fh)
 
-    print('[config_logging] ', log_name)
+    PF.p(f'[config_logging] {log_name}', layer_back=2)
 
 
 def init_env():

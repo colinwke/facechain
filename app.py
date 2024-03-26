@@ -21,7 +21,7 @@ from facechain.inference_inpaint import GenPortrait_inpaint
 from facechain.inference_talkinghead import SadTalker, text_to_speech_edge
 from facechain.inference_tryon import GenPortrait_tryon
 from facechain.train_text_to_image_lora import prepare_dataset, data_process_fn
-from facechain.utils import snapshot_download_dk, check_ffmpeg, set_spawn_method, project_dir, join_worker_data_dir
+from facechain.utils import snapshot_download_dk, check_ffmpeg, set_spawn_method, PROJECT_DIR, join_worker_data_dir
 
 training_done_count = 0
 inference_done_count = 0
@@ -96,7 +96,7 @@ def train_lora_fn(base_model_path=None, revision=None, sub_path=None, output_img
         if 'xl-base' in base_model_path:
             command = [
                 'python',
-                f'{project_dir}/facechain/train_text_to_image_lora_sdxl.py' if base_model_path is SDXL_BASE_MODEL_ID else f'{project_dir}/facechain/train_text_to_image_lora.py',
+                f'{PROJECT_DIR}/facechain/train_text_to_image_lora_sdxl.py' if base_model_path is SDXL_BASE_MODEL_ID else f'{PROJECT_DIR}/facechain/train_text_to_image_lora.py',
                 f'--pretrained_model_name_or_path={base_model_path}',
                 f'--revision={revision}',
                 f'--sub_path={sub_path}',
@@ -122,7 +122,7 @@ def train_lora_fn(base_model_path=None, revision=None, sub_path=None, output_img
         else:
             command = [
                 'python',
-                f'{project_dir}/facechain/train_text_to_image_lora_sdxl.py' if base_model_path is SDXL_BASE_MODEL_ID else f'{project_dir}/facechain/train_text_to_image_lora.py',
+                f'{PROJECT_DIR}/facechain/train_text_to_image_lora_sdxl.py' if base_model_path is SDXL_BASE_MODEL_ID else f'{PROJECT_DIR}/facechain/train_text_to_image_lora.py',
                 f'--pretrained_model_name_or_path={base_model_path}',
                 f'--revision={revision}',
                 f'--sub_path={sub_path}',
@@ -153,11 +153,11 @@ def train_lora_fn(base_model_path=None, revision=None, sub_path=None, output_img
             print(f"Error executing the command: {e}")
             raise gr.Error("训练失败 (Training failed)")
     else:
-        print(f'** project dir: {project_dir}')
+        print(f'** project dir: {PROJECT_DIR}')
         print(
             f'** params: >base_model_path:{base_model_path}, >revision:{revision}, >sub_path:{sub_path}, >output_img_dir:{output_img_dir}, >work_dir:{work_dir}, >lora_r:{lora_r}, >lora_alpha:{lora_alpha}')
 
-        train_script_path = f'{project_dir}/facechain/train_text_to_image_lora_sdxl.py' if base_model_path == SDXL_BASE_MODEL_ID else f'{project_dir}/facechain/train_text_to_image_lora.py'
+        train_script_path = f'{PROJECT_DIR}/facechain/train_text_to_image_lora_sdxl.py' if base_model_path == SDXL_BASE_MODEL_ID else f'{PROJECT_DIR}/facechain/train_text_to_image_lora.py'
 
         if 'xl-base' in base_model_path:
             res = os.system(
@@ -181,8 +181,8 @@ def train_lora_fn(base_model_path=None, revision=None, sub_path=None, output_img
                 f'--lora_alpha={lora_alpha} '
                 f'--lora_text_encoder_r=32 '
                 f'--lora_text_encoder_alpha=32 ')
-                # f'--use_swift '
-                # f'--resume_from_checkpoint="fromfacecommon"')
+            # f'--use_swift '
+            # f'--resume_from_checkpoint="fromfacecommon"')
         else:
             res = os.system(
                 f'PYTHONPATH=. accelerate launch {train_script_path} '
@@ -1347,7 +1347,7 @@ def inference_input():
 
 
 def inference_inpaint():
-    preset_template = glob(os.path.join(f'{project_dir}/resources/inpaint_template/*.jpg'))
+    preset_template = glob(os.path.join(f'{PROJECT_DIR}/resources/inpaint_template/*.jpg'))
     with gr.Blocks() as demo:
         uuid = gr.Text(label="modelscope_uuid", visible=False)
         # Initialize the GUI
@@ -1469,13 +1469,13 @@ def inference_talkinghead():
         tts.click(fn=text_to_speech_edge, inputs=[input_text, speaker], outputs=[audio_tts])
         with gr.Row():
             examples = [
-                [f'{project_dir}/resources/source_image/man.png',
-                 f'{project_dir}/resources/driven_audio/chinese_poem1.wav',
+                [f'{PROJECT_DIR}/resources/source_image/man.png',
+                 f'{PROJECT_DIR}/resources/driven_audio/chinese_poem1.wav',
                  'full',
                  True,
                  False],
-                [f'{project_dir}/resources/source_image/women.png',
-                 f'{project_dir}/resources/driven_audio/chinese_poem2.wav',
+                [f'{PROJECT_DIR}/resources/source_image/women.png',
+                 f'{PROJECT_DIR}/resources/driven_audio/chinese_poem2.wav',
                  'full',
                  True,
                  False],
@@ -1579,7 +1579,7 @@ for base_model in base_models:
         with open(file_path, "r", encoding='utf-8') as f:
             data = json.load(f)
             if data['img'][:2] == './':
-                data['img'] = f"{project_dir}/{data['img'][2:]}"
+                data['img'] = f"{PROJECT_DIR}/{data['img'][2:]}"
             style_in_base.append(data['name'])
             styles.append(data)
     base_model['style_list'] = style_in_base

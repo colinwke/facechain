@@ -27,7 +27,7 @@ import sys
 from pathlib import Path
 from typing import Tuple
 
-from init_project_env import init_env
+from project_env import init_env
 
 init_env()
 
@@ -56,7 +56,7 @@ from diffusers.utils.import_utils import is_xformers_available
 from huggingface_hub import create_repo, upload_folder
 from torch import Tensor
 
-from facechain.wktk.base_utils import Timestamp, PF
+from facechain.wktk.base_utils import Timestamp, PF, AttrDict
 
 parent_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if parent_path not in sys.path:
@@ -77,7 +77,6 @@ from facechain.inference import data_process_fn
 check_min_version("0.14.0.dev0")
 
 logger = get_logger(__name__, log_level="INFO")
-PF.p('[__name__] ==', __name__)
 
 
 class FaceCrop(torch.nn.Module):
@@ -209,7 +208,73 @@ def prepare_dataset(instance_images: list, output_dataset_dir):
         image.save(out_path, format='JPEG', quality=100)
 
 
-def parse_args():
+def parse_args(imei='a_spec_imei'):
+    d = {
+        'pretrained_model_name_or_path': 'ly261666/cv_portrait_model',
+        'revision': 'v2.0',
+        'sub_path': 'film/film',
+        'dataset_name': f'./data/cache_imei/{imei}/input_img',
+        'dataset_config_name': None,
+        'train_data_dir': None,
+        'output_dataset_name': f'./data/cache_imei/{imei}/output_processed',
+        'image_column': 'image',
+        'caption_column': 'text',
+        'validation_prompt': None,
+        'num_validation_images': 1,
+        'validation_epochs': 1,
+        'max_train_samples': None,
+        'output_dir': f'./data/cache_imei/{imei}/output_train',
+        'cache_dir': None,
+        'seed': 42,
+        'resolution': 512,
+        'center_crop': False,
+        'random_flip': True,
+        'train_text_encoder': False,
+        'use_peft': False,
+        'use_swift': False,
+        'lora_r': 4,
+        'lora_alpha': 32,
+        'lora_dropout': 0.0,
+        'lora_bias': 'none',
+        'lora_text_encoder_r': 32,
+        'lora_text_encoder_alpha': 32,
+        'lora_text_encoder_dropout': 0.0,
+        'lora_text_encoder_bias': 'none',
+        'train_batch_size': 1,
+        'num_train_epochs': 200,
+        'max_train_steps': None,
+        'gradient_accumulation_steps': 1,
+        'gradient_checkpointing': False,
+        'learning_rate': 0.00015,
+        'scale_lr': False,
+        'lr_scheduler': 'cosine',
+        'lr_warmup_steps': 0,
+        'use_8bit_adam': False,
+        'allow_tf32': False,
+        'dataloader_num_workers': 0,
+        'adam_beta1': 0.9,
+        'adam_beta2': 0.999,
+        'adam_weight_decay': 0.01,
+        'adam_epsilon': 1e-08,
+        'max_grad_norm': 1.0,
+        'push_to_hub': False,
+        'hub_token': None,
+        'hub_model_id': None,
+        'logging_dir': 'logs',
+        'mixed_precision': None,
+        'report_to': 'tensorboard',
+        'local_rank': -1,
+        'checkpointing_steps': 5000,
+        'checkpoints_total_limit': None,
+        'resume_from_checkpoint': 'fromfacecommon',
+        'enable_xformers_memory_efficient_attention': False
+    }
+
+    d = AttrDict(d)
+    return d
+
+
+def parse_args2(imei='a_spec_imei'):
     parser = argparse.ArgumentParser(description="Simple example of a training script.")
     parser.add_argument(
         "--pretrained_model_name_or_path",
@@ -517,12 +582,12 @@ def parse_args():
     # default args for parser
     args_spec_list = None
     if len(sys.argv) <= 1:
-        args_spec_list = """
+        args_spec_list = f"""
 --pretrained_model_name_or_path=ly261666/cv_portrait_model
 --revision=v2.0
 --sub_path=film/film
---dataset_name=./data/cache_imei/a_spec_imei/input_img
---output_dataset_name=./data/cache_imei/a_spec_imei/output_processed
+--dataset_name=./data/cache_imei/{imei}/input_img
+--output_dataset_name=./data/cache_imei/{imei}/output_processed
 --caption_column=text
 --resolution=512
 --random_flip
@@ -533,7 +598,7 @@ def parse_args():
 --lr_scheduler=cosine
 --lr_warmup_steps=0
 --seed=42
---output_dir=./data/cache_imei/a_spec_imei/output_train
+--output_dir=./data/cache_imei/{imei}/output_train
 --lora_r=4
 --lora_alpha=32
 --lora_text_encoder_r=32
@@ -551,17 +616,22 @@ def parse_args():
     if args.dataset_name is None and args.train_data_dir is None and args.output_dataset_name is None:
         raise ValueError("Need either a dataset name or a training folder.")
 
+    d = vars(args)
+    PF.print_dict(d, title='use parseargument')
+    PF.p(json.dumps(d, separators=(',', ':'), ensure_ascii=False))
+    print(d)
+
     return args
 
 
 DATASET_NAME_MAPPING = {"lambdalabs/pokemon-blip-captions": ("image", "text"), }
 
 
-def main_training():
+def main_training(imei='a_spec_imei'):
     multiprocessing.set_start_method('spawn', force=True)
-    ts = Timestamp()
+    ts = Timestamp('main_training')
 
-    args = parse_args()
+    args = parse_args(imei)
     logging_dir = os.path.join(args.output_dir, args.logging_dir)
     shutil.rmtree(args.output_dir, ignore_errors=True)
     os.makedirs(args.output_dir)
@@ -635,12 +705,9 @@ def main_training():
         user_agent={'invoked_by': 'trainer', 'third_party': 'facechain'}
     )
 
-    PF.p('[model_dir1]', model_dir)
-
     if args.sub_path is not None and len(args.sub_path) > 0:
         model_dir = os.path.join(model_dir, args.sub_path)
 
-    PF.p('[model_dir2]', model_dir)
     # Load scheduler, tokenizer and models.
     noise_scheduler = DDPMScheduler.from_pretrained(model_dir, subfolder="scheduler")
     tokenizer = CLIPTokenizer.from_pretrained(model_dir, subfolder="tokenizer")
@@ -829,7 +896,9 @@ def main_training():
 
     # In distributed training, the load_dataset function guarantees that only one local process can concurrently
     # download the dataset.
+    PF.p(f'[data_dir=args.dataset_name] {args.dataset_name}')
     dataset = load_dataset("imagefolder", data_dir=args.dataset_name)
+    PF.p(f'[dataset] {dataset}')
 
     # if args.dataset_name is not None:
     #     # Downloading and loading a dataset from the hub.
@@ -855,9 +924,13 @@ def main_training():
     # Preprocessing the datasets.
     # We need to tokenize inputs and targets.
     column_names = dataset["train"].column_names
+    PF.p(f'[dataset["train"]] {dataset["train"]}')
+    PF.p(f'[dataset["train"].column_names] {dataset["train"].column_names}')
 
     # 6. Get the column names for input/target.
     dataset_columns = DATASET_NAME_MAPPING.get(args.dataset_name, None)
+    PF.p(f'[args.dataset_name] {args.dataset_name}')
+    PF.p(f'[dataset_columns] {dataset_columns}')
     if args.image_column is None:
         image_column = dataset_columns[0] if dataset_columns is not None else column_names[0]
     else:
@@ -866,6 +939,7 @@ def main_training():
             raise ValueError(
                 f"--image_column' value '{args.image_column}' needs to be one of: {', '.join(column_names)}"
             )
+    PF.p(f'[args.caption_column] {args.caption_column}, [dataset_columns] {dataset_columns}, [column_names] {column_names}')
     if args.caption_column is None:
         caption_column = dataset_columns[1] if dataset_columns is not None else column_names[1]
     else:
@@ -1204,9 +1278,7 @@ def main_training():
 
     # Final inference
     # Load previous pipeline
-    pipeline = DiffusionPipeline.from_pretrained(
-        model_dir, torch_dtype=weight_dtype
-    )
+    pipeline = DiffusionPipeline.from_pretrained(model_dir, torch_dtype=weight_dtype)
 
     if args.use_peft:
         def load_and_set_lora_ckpt(pipe, ckpt_dir, global_step, device, dtype):

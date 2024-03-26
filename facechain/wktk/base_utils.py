@@ -117,10 +117,10 @@ class Logger:
 
     @staticmethod
     def _logger_find_caller(stack_info=False):
-        Logger._logger_find_caller_38(stack_info, stacklevel=1)
+        Logger._logger_find_caller(stack_info, stacklevel=1)
 
     @staticmethod
-    def _logger_find_caller_38(stack_info=False, stacklevel=1):
+    def _logger_find_caller(stack_info=False, stacklevel=1):
         """refs: tensorflow.python.platform.tf_logging._logger_find_caller
                  logging.Logger._log
                  logging.Logger.findCaller
@@ -197,7 +197,7 @@ class Logger:
         """
         logger = getLogger(name)
         if name not in Logger._LOG_DICT_:
-            logger.findCaller = Logger._logger_find_caller_38 if version_info >= (3, 8) else Logger._logger_find_caller
+            logger.findCaller = Logger._logger_find_caller
             logger.handlers.clear()
             logger.propagate = False
             logger.setLevel(INFO)
@@ -342,8 +342,18 @@ class PF:
             info_keeper.append(SU.hf('e capture_locals%s' % title_formatted, pre=''))
             info_keeper.append("".join(tb.format()).rstrip())
         if detail:
+            """refs: traceback.StackSummary.format
+            from traceback import extract_stack, format_list
+            fmt_stack_str = ''.join(format_list(extract_stack()))
+            fmt_stack_str = fmt_stack_str.rstrip().replace('File "', '## ').replace('", line ', ':').replace(', in ', ' -- ')
+            print(f"--- ''.join(format_list(extract_stack())).cc ---\n{fmt_stack_str}")
+            
+            """
             info_keeper.append(SU.hf('more_stack%s' % title_formatted, pre=''))
-            info_keeper.append(''.join(format_list(stack)).rstrip())
+            info_keeper.append(''.join(format_list(stack)).rstrip()
+                               .replace('  File "', '  -- ')
+                               .replace('", line ', ':')
+                               .replace(', in ', ' -- '))
         if content:
             info_keeper.append(SU.hf('PF.exit', pre=''))
             info_keeper.append(content)
@@ -522,7 +532,7 @@ class Timestamp:
         self.log_keeper = []
 
         dt = DateTime.datetime(self._start, f='p')
-        msg = "Timestamp(%s).S: %s\n\n\n" % (flag, dt)
+        msg = "Timestamp( %s ).Sta: %s\n\n\n" % (flag, dt)
         self.log_keeper.append(msg)
         PF.p(msg)
 
@@ -536,7 +546,8 @@ class Timestamp:
         self._c_start = cur_time
 
         dt = DateTime.datetime(cur_time, f='p')
-        msg = "Timestamp(%s).C: %s(%.2fs) -- %s" % (self.flag, dt, run_time, info)
+        info = ' -- ' + info if info else ''
+        msg = "Timestamp( %s ).Cut: %s(%.2fs)%s" % (self.flag, dt, run_time, info)
         self.log(msg)
         return run_time
 
@@ -544,10 +555,9 @@ class Timestamp:
         cur_time = time()
         run_time = cur_time - self._start
         dt = DateTime.datetime(cur_time, f='p')
-        msg = "Timestamp(%s).E: %s(%.2fs)\n\n\n" % (self.flag, dt, run_time)
+        info = ' -- ' + info if info else ''
+        msg = "Timestamp( %s ).End: %s(%.2fs)%s\n\n\n" % (self.flag, dt, run_time, info)
         self.log(msg)
-        if info:
-            PF.p(info)
         if e:
             PF.exit(e)
 
@@ -1625,5 +1635,8 @@ if __name__ == '__main__':
     # UT.msg_phone('meishi', http_url='ms')
     # t4(1, 2)
     print(SU.clean_chars("()真的是,这个吗''""'"))
-    Args.get_paired_args("1 2 3 4=5".split())
+    # Args.get_paired_args("1 2 3 4=5".split())
     PF.p('hello')
+    ts = Timestamp('train')
+    ts.cut('hello')
+    ts.end('good')

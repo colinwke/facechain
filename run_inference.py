@@ -4,38 +4,52 @@ import os
 
 import cv2
 
-from init_project_env import init_env
+from project_env import init_env
 
 init_env()
 
 from facechain.constants import neg_prompt, pos_prompt_with_cloth, pos_prompt_with_style, base_models
 from facechain.inference import GenPortrait
-from facechain.utils import snapshot_download_dk, project_dir
+from facechain.utils import snapshot_download_dk, PROJECT_DIR
 from facechain.wktk.base_utils import PF, Timestamp, DateTime
 
 
-def generate_pos_prompt(style_model, prompt_cloth, styles):
+def generate_pos_prompt(
+        style_model,
+        prompt_cloth,
+        styles,
+        user_prompt_cloth='',
+        user_prompt_style=''
+):
+    pos_prompt_with_cloth2 = pos_prompt_with_cloth
+    if user_prompt_cloth is not None and len(user_prompt_cloth) > 4:
+        pos_prompt_with_cloth2 = user_prompt_cloth
+
+    pos_prompt_with_style2 = pos_prompt_with_style
+    if user_prompt_style is not None and len(user_prompt_style) > 4:
+        pos_prompt_with_style2 = user_prompt_style
+
     if style_model is not None:
-        matched = list(filter(lambda style: style_model == style['name'], styles))
-        if len(matched) == 0:
+        hited_list = list(filter(lambda style: style_model == style['name'], styles))
+        if len(hited_list) == 0:
             raise ValueError(f'styles not found: {style_model}')
-        matched = matched[0]
-        if matched['model_id'] is None:
-            pos_prompt = pos_prompt_with_cloth.format(prompt_cloth)
+        hited = hited_list[0]
+        if hited['model_id'] is None:
+            pos_prompt = pos_prompt_with_cloth2.replace('__prompt_cloth__', prompt_cloth)
         else:
-            pos_prompt = pos_prompt_with_style.format(matched['add_prompt_style'])
+            pos_prompt = pos_prompt_with_style2.replace('__prompt_style__', hited['add_prompt_style'])
     else:
-        pos_prompt = pos_prompt_with_cloth.format(prompt_cloth)
+        pos_prompt = pos_prompt_with_cloth2.replace('__prompt_cloth__', prompt_cloth)
     return pos_prompt
 
 
-def main_predict():
-    timestamp = Timestamp()
+def main_predict(imei='iShot_2024-03-20_18.53.51.png', user_prompt_cloth='', user_prompt_style=''):
+    timestamp = Timestamp('main_predict')
 
     styles = []
     for base_model in base_models:
         style_in_base = []
-        folder_path = f"{project_dir}/styles/{base_model['name']}"
+        folder_path = f"{PROJECT_DIR}/styles/{base_model['name']}"
         files = os.listdir(folder_path)
         files.sort()
         for file in files:
@@ -53,26 +67,38 @@ def main_predict():
     use_depth_control = False
     use_pose_model = False
     pose_image = 'poses/man/pose1.png'
-    processed_dir = './data/cache_imei/a_spec_imei/output_processed'
+    processed_dir = f'./data/cache_imei/{imei}/output_processed'
     num_generate = 5
     multiplier_style = 0.25
     multiplier_human = 0.85
-    train_output_dir = './data/cache_imei/a_spec_imei/output_train'
-    output_dir = './data/cache_imei/a_spec_imei/output_generated'
+    train_output_dir = f'./data/cache_imei/{imei}/output_train'
+    output_dir = f'./data/cache_imei/{imei}/output_generated'
     base_model = base_models[0]
     style = styles[0]
     model_id = style['model_id']
 
     if model_id == None:
         style_model_path = None
-        pos_prompt = generate_pos_prompt(style['name'], style['add_prompt_style'], styles)
+        pos_prompt = generate_pos_prompt(
+            style['name'],
+            style['add_prompt_style'],
+            styles,
+            user_prompt_cloth=user_prompt_cloth,
+            user_prompt_style=user_prompt_style
+        )
     else:
         if os.path.exists(model_id):
             model_dir = model_id
         else:
             model_dir = snapshot_download_dk(model_id, revision=style['revision'])
         style_model_path = os.path.join(model_dir, style['bin_file'])
-        pos_prompt = generate_pos_prompt(style['name'], style['add_prompt_style'], styles)  # style has its own prompt
+        pos_prompt = generate_pos_prompt(
+            style['name'],
+            style['add_prompt_style'],
+            styles,
+            user_prompt_cloth=user_prompt_cloth,
+            user_prompt_style=user_prompt_style
+        )  # style has its own prompt
 
     if not use_pose_model:
         pose_model_path = None

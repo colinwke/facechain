@@ -1,14 +1,11 @@
-from facechain.utils import project_dir
+from facechain.utils import PROJECT_DIR
 
 neg_prompt = '(nsfw:2), paintings, sketches, (worst quality:2), (low quality:2), ' \
              'lowers, normal quality, ((monochrome)), ((grayscale)), logo, word, character, bad hand, tattoo, (username, watermark, signature, time signature, timestamp, artist name, copyright name, copyright),' \
              'low res, ((monochrome)), ((grayscale)), skin spots, acnes, skin blemishes, age spot, glans, extra fingers, fewer fingers, strange fingers, bad hand, mole, ((extra legs)), ((extra hands))'
-# pos_prompt_with_cloth = 'raw photo, masterpiece, chinese, {}, solo, medium shot, high detail face, looking straight into the camera with shoulders parallel to the frame, photorealistic, best quality'
-pos_prompt_with_cloth = 'formal wear, formal clothes, identification photo, ID photo, raw photo, masterpiece, chinese, solo, medium shot, high detail face, looking straight into the camera with shoulders parallel to the frame, photorealistic, best quality'
-pos_prompt_with_cloth = 'muscle, raw photo, masterpiece, chinese, solo, medium shot, high detail face, looking straight into the camera with shoulders parallel to the frame, photorealistic, best quality'
-pos_prompt_with_cloth = 'raw photo, masterpiece, chinese, solo, medium shot, high detail face, looking straight into the camera with shoulders parallel to the frame, photorealistic, best quality'
+pos_prompt_with_cloth = 'raw photo, masterpiece, chinese, __prompt_cloth__, solo, medium shot, high detail face, looking straight into the camera with shoulders parallel to the frame, photorealistic, best quality'
 
-pos_prompt_with_style = '{}, upper_body, raw photo, masterpiece, solo, medium shot, high detail face, photorealistic, best quality'
+pos_prompt_with_style = '__prompt_style__, upper_body, raw photo, masterpiece, solo, medium shot, high detail face, photorealistic, best quality'
 
 base_models = [
     {
@@ -39,16 +36,16 @@ pose_models = [
 
 pose_examples = {
     'man': [
-        [f'{project_dir}/poses/man/pose1.png'],
-        [f'{project_dir}/poses/man/pose2.png'],
-        [f'{project_dir}/poses/man/pose3.png'],
-        [f'{project_dir}/poses/man/pose4.png']
+        [f'{PROJECT_DIR}/poses/man/pose1.png'],
+        [f'{PROJECT_DIR}/poses/man/pose2.png'],
+        [f'{PROJECT_DIR}/poses/man/pose3.png'],
+        [f'{PROJECT_DIR}/poses/man/pose4.png']
     ],
     'woman': [
-        [f'{project_dir}/poses/woman/pose1.png'],
-        [f'{project_dir}/poses/woman/pose2.png'],
-        [f'{project_dir}/poses/woman/pose3.png'],
-        [f'{project_dir}/poses/woman/pose4.png'],
+        [f'{PROJECT_DIR}/poses/woman/pose1.png'],
+        [f'{PROJECT_DIR}/poses/woman/pose2.png'],
+        [f'{PROJECT_DIR}/poses/woman/pose3.png'],
+        [f'{PROJECT_DIR}/poses/woman/pose4.png'],
     ]
 }
 
