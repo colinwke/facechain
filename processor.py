@@ -76,13 +76,6 @@ def run_model(model, x, **kwargs):
     os.makedirs(os.path.join(imei_cache_path, 'input_img'), exist_ok=True)
     sh(f'curl {pic_url} > {imei_cache_path}/input_img/000.png')
 
-    model = load_model()
-    inputs_args = {
-        'imei': imei,
-        'des': des,
-        'pic': pic_url,
-    }
-
     print("wpai_training.py")
     main_training(imei)
     main_predict(imei, user_prompt_cloth=des)

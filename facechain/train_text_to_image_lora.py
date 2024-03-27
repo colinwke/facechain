@@ -627,6 +627,7 @@ def parse_args2(imei='a_spec_imei'):
 DATASET_NAME_MAPPING = {"lambdalabs/pokemon-blip-captions": ("image", "text"), }
 
 
+@torch.enable_grad()
 def main_training(imei='a_spec_imei'):
     multiprocessing.set_start_method('spawn', force=True)
     ts = Timestamp('main_training')
@@ -671,7 +672,7 @@ def main_training(imei='a_spec_imei'):
     logging.basicConfig(
         # format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
         format="[%(asctime)s] [{N}] \"%(filename)s:%(lineno)d\" %(message)s".format(N='N'),
-        datefmt="%m/%d/%Y %H:%M:%S",
+        datefmt="%m-%d-%Y %H:%M:%S",
         level=logging.INFO,
     )
     logger.info(accelerator.state, main_process_only=False)
@@ -1061,13 +1062,16 @@ def main_training(imei='a_spec_imei'):
     logger.info(f"  Total optimization steps = {args.max_train_steps}")
     global_step = 0
     first_epoch = 0
+    resume_step = 0
 
     # Potentially load in the weights and states from a previous save
     if args.resume_from_checkpoint:
         if args.resume_from_checkpoint == 'fromfacecommon':
-            weight_model_dir = snapshot_download_dk('damo/face_frombase_c4',
-                                                    revision='v1.0.0',
-                                                    user_agent={'invoked_by': 'trainer', 'third_party': 'facechain'})
+            weight_model_dir = snapshot_download_dk(
+                'damo/face_frombase_c4',
+                revision='v1.0.0',
+                user_agent={'invoked_by': 'trainer', 'third_party': 'facechain'}
+            )
             path = os.path.join(weight_model_dir, 'face_frombase_c4.bin')
         elif args.resume_from_checkpoint != "latest":
             path = os.path.basename(args.resume_from_checkpoint)
@@ -1102,6 +1106,7 @@ def main_training(imei='a_spec_imei'):
     progress_bar = tqdm(range(global_step, args.max_train_steps), disable=not accelerator.is_local_main_process)
     progress_bar.set_description("Steps")
 
+    unet.requires_grad_(True)
     for epoch in range(first_epoch, args.num_train_epochs):
         unet.train()
         if args.train_text_encoder:
@@ -1151,10 +1156,22 @@ def main_training(imei='a_spec_imei'):
 
                 # RuntimeError: element 0 of tensors does not require grad and does not have a grad_fn
                 # https://github.com/LlamaFamily/Llama-Chinese/issues/242#issuecomment-1772231875
-                loss.requires_grad_()
-
+                loss.requires_grad_(True)
+                # https://github.com/Lightning-AI/pytorch-lightning/issues/18222
+                torch.set_grad_enabled(True)
+                assert torch.is_grad_enabled()
+                # assert all(p.requires_grad for p in self.parameters())
                 # Backpropagate
-                accelerator.backward(loss)
+                with torch.enable_grad():
+                    """因为 wpai `predictor.py`(wpai 在线预测, python 脚本任务 运行框架)中, 对`predict方法`
+                    进行了注解声明`@torch.no_grad()`, 所以再预测过程中不能实现梯度的反向传播, 使用`loss.requires_grad_(True)`,
+                    `torch.set_grad_enabled(True)`都未能生效, 只有使用`with torch.enable_grad(): accelerator.backward(loss)`
+                    生效!
+                    https://github.com/pytorch/pytorch/issues/19189#issue-432418118
+                    另外, wpai 建议使用自定义镜像, 自己启动一个GRPC或者HTTP的服务, wpai不再支持在线学习
+                    """
+                    accelerator.backward(loss)
+
                 if accelerator.sync_gradients:
                     if args.use_peft or args.use_swift:
                         params_to_clip = (
