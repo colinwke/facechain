@@ -11,7 +11,7 @@ init_env()
 from facechain.constants import neg_prompt, pos_prompt_with_cloth, pos_prompt_with_style, base_models
 from facechain.inference import GenPortrait
 from facechain.utils import snapshot_download_dk, PROJECT_DIR
-from facechain.wktk.base_utils import PF, Timestamp, DateTime
+from facechain.wktk.base_utils import PF, TimeMarker, DateTime
 
 
 def generate_pos_prompt(
@@ -43,8 +43,8 @@ def generate_pos_prompt(
     return pos_prompt
 
 
-def main_predict(imei='iShot_2024-03-20_18.53.51.png', user_prompt_cloth='', user_prompt_style=''):
-    timestamp = Timestamp('main_predict')
+def main_predict(reqid='iShot_2024-03-20_18.53.51.png', user_prompt_cloth='', user_prompt_style=''):
+    timestamp = TimeMarker('main_predict')
 
     styles = []
     for base_model in base_models:
@@ -67,12 +67,12 @@ def main_predict(imei='iShot_2024-03-20_18.53.51.png', user_prompt_cloth='', use
     use_depth_control = False
     use_pose_model = False
     pose_image = 'poses/man/pose1.png'
-    processed_dir = f'./data/cache_imei/{imei}/output_processed'
+    processed_dir = f'./data/cache_req/{reqid}/output_processed'
     num_generate = 5
     multiplier_style = 0.25
     multiplier_human = 0.85
-    train_output_dir = f'./data/cache_imei/{imei}/output_train'
-    output_dir = f'./data/cache_imei/{imei}/output_generated'
+    train_output_dir = f'./data/cache_req/{reqid}/output_train'
+    output_dir = f'./data/cache_req/{reqid}/output_generated'
     base_model = base_models[0]
     style = styles[0]
     model_id = style['model_id']

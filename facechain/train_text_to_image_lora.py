@@ -56,7 +56,7 @@ from diffusers.utils.import_utils import is_xformers_available
 from huggingface_hub import create_repo, upload_folder
 from torch import Tensor
 
-from facechain.wktk.base_utils import Timestamp, PF, AttrDict
+from facechain.wktk.base_utils import TimeMarker, PF, AttrDict
 
 parent_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if parent_path not in sys.path:
@@ -208,22 +208,22 @@ def prepare_dataset(instance_images: list, output_dataset_dir):
         image.save(out_path, format='JPEG', quality=100)
 
 
-def parse_args(imei='a_spec_imei'):
+def parse_args(reqid='a_spec_reqid'):
     d = {
         'pretrained_model_name_or_path': 'ly261666/cv_portrait_model',
         'revision': 'v2.0',
         'sub_path': 'film/film',
-        'dataset_name': f'./data/cache_imei/{imei}/input_img',
+        'dataset_name': f'./data/cache_req/{reqid}/input_img',
         'dataset_config_name': None,
         'train_data_dir': None,
-        'output_dataset_name': f'./data/cache_imei/{imei}/output_processed',
+        'output_dataset_name': f'./data/cache_req/{reqid}/output_processed',
         'image_column': 'image',
         'caption_column': 'text',
         'validation_prompt': None,
         'num_validation_images': 1,
         'validation_epochs': 1,
         'max_train_samples': None,
-        'output_dir': f'./data/cache_imei/{imei}/output_train',
+        'output_dir': f'./data/cache_req/{reqid}/output_train',
         'cache_dir': None,
         'seed': 42,
         'resolution': 512,
@@ -274,7 +274,7 @@ def parse_args(imei='a_spec_imei'):
     return d
 
 
-def parse_args2(imei='a_spec_imei'):
+def parse_args2(reqid='a_spec_reqid'):
     parser = argparse.ArgumentParser(description="Simple example of a training script.")
     parser.add_argument(
         "--pretrained_model_name_or_path",
@@ -586,8 +586,8 @@ def parse_args2(imei='a_spec_imei'):
 --pretrained_model_name_or_path=ly261666/cv_portrait_model
 --revision=v2.0
 --sub_path=film/film
---dataset_name=./data/cache_imei/{imei}/input_img
---output_dataset_name=./data/cache_imei/{imei}/output_processed
+--dataset_name=./data/cache_req/{reqid}/input_img
+--output_dataset_name=./data/cache_req/{reqid}/output_processed
 --caption_column=text
 --resolution=512
 --random_flip
@@ -598,7 +598,7 @@ def parse_args2(imei='a_spec_imei'):
 --lr_scheduler=cosine
 --lr_warmup_steps=0
 --seed=42
---output_dir=./data/cache_imei/{imei}/output_train
+--output_dir=./data/cache_req/{reqid}/output_train
 --lora_r=4
 --lora_alpha=32
 --lora_text_encoder_r=32
@@ -628,11 +628,11 @@ DATASET_NAME_MAPPING = {"lambdalabs/pokemon-blip-captions": ("image", "text"), }
 
 
 @torch.enable_grad()
-def main_training(imei='a_spec_imei'):
+def main_training(reqid='a_spec_reqid'):
     multiprocessing.set_start_method('spawn', force=True)
-    ts = Timestamp('main_training')
+    ts = TimeMarker('main_training')
 
-    args = parse_args(imei)
+    args = parse_args(reqid)
     logging_dir = os.path.join(args.output_dir, args.logging_dir)
     shutil.rmtree(args.output_dir, ignore_errors=True)
     os.makedirs(args.output_dir)
@@ -1168,7 +1168,7 @@ def main_training(imei='a_spec_imei'):
                     `torch.set_grad_enabled(True)`都未能生效, 只有使用`with torch.enable_grad(): accelerator.backward(loss)`
                     生效!
                     https://github.com/pytorch/pytorch/issues/19189#issue-432418118
-                    另外, wpai 建议使用自定义镜像, 自己启动一个GRPC或者HTTP的服务, wpai不再支持在线学习
+                    另外, wpai 建议使用自定义镜像(镜像市场, 类别:自定义任务), 自己启动一个GRPC或者HTTP的服务, wpai不再支持在线学习
                     """
                     accelerator.backward(loss)
 

@@ -16,7 +16,7 @@ PF.p(f"[           __file__] {__file__}", layer_back=1)
 PF.p('\n' * 20)
 
 # MODELSCOPE_CACHE = f"{PROJECT_DIR}/data/cache_model/modelscope/hub"
-MODELSCOPE_CACHE = f"./"  # 避免预训练模型里包含其他预训练模型(wrapper.py)导致下载后路径加载失败
+MODELSCOPE_CACHE = f"./"  # 避免预训练模型里包含其他预训练模型(ms_wrapper.py)导致下载后路径加载失败
 os.environ["MODELSCOPE_CACHE"] = MODELSCOPE_CACHE
 
 

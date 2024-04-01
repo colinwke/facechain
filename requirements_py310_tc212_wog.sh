@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2046
-echo "1015"
-#shellcheck disable=SC2046
 #set -eo pipefail
 # ----------------------------------------------------------------
 # @time: 2024/03/14 15:05
@@ -10,13 +8,13 @@ echo "1015"
 # ----------------------------------------------------------------
 USAGE=$( # this is a block comment
     cat <<'EOF'
-rsync -avz dk@10.253.69.198::dk/working/facechain/requirements_py395_tc201_wog.sh .
-hrmr /home/hdp_lbg_ectech/resultdata/wangke/script/a/requirements_py395_tc201_wog.sh
-hadoop fs -put requirements_py395_tc201_wog.sh /home/hdp_lbg_ectech/resultdata/wangke/script/a/
+cd /opt/users/wangke/project/zhaopin_data_process_v16/tmp_facegen
+rsync -avz dk@10.253.69.198::dk/working/facechain/requirements_py310_tc212_wog.sh .
+hrmr /home/hdp_lbg_ectech/resultdata/wangke/script/a/requirements_py310_tc212_wog.sh
+hadoop fs -put requirements_py310_tc212_wog.sh /home/hdp_lbg_ectech/resultdata/wangke/script/a/
 hld /home/hdp_lbg_ectech/resultdata/wangke/script/a/
 
-hadoop fs -get /home/hdp_lbg_ectech/resultdata/wangke/script/a/requirements_py395_tc201_wog.sh && /bin/bash requirements_py395_tc201_wog.sh
-
+hadoop fs -get /home/hdp_lbg_ectech/resultdata/wangke/script/a/requirements_py310_tc212_wog.sh && /bin/bash requirements_py310_tc212_wog.sh
 # CUDA 11.8  ## https://pytorch.org/get-started/previous-versions/#v200
 pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
 
@@ -77,13 +75,13 @@ EOF
     yes | pip3 uninstall timm
     yes | pip3 uninstall scikit-image
     yes | pip3 uninstall gradio
+    yes | pip3 uninstall gradio_client
     yes | pip3 uninstall controlnet_aux
     yes | pip3 uninstall mediapipe
     yes | pip3 uninstall python-slugify
     yes | pip3 uninstall edge-tts
 
     yes | pip3 uninstall chromadb continuedev pandas pywavelets vllm xformers
-
 
     #pip3 install torch==2.1.2 torchaudio==2.1.2 torchvision==0.16.2
     #pip3 install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118  ## official very slow
@@ -97,11 +95,6 @@ EOF
     pip3 install scikit-image==0.19.3
     #pip3 install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2
 
-    #pip3 install gradio==3.50.2
-    pip3 install controlnet_aux==0.0.6
-    pip3 install onnxruntime==1.15.1
-    pip3 install modelscope==1.10.0
-
     pip3 install onnxruntime==1.15.1
     pip3 install diffusers==0.23.0
     pip3 install invisible-watermark==0.2.0
@@ -112,9 +105,9 @@ EOF
     pip3 install python-slugify
     pip3 install edge-tts
 
-    #pip3 install mmcv-full  # install with setup.py, very slow
-    pip3 install -U openmim
-    mim install mmcv-full
+    pip3 install mmcv-full # mmcv的安装都需要在本地上编译, 速度很慢, 需要保持线上和线下使用同一种方法安装(pip)
+    #pip3 install -U openmim
+    #mim install mmcv-full
 
     pip3 install accelerate
     pip3 install transformers
@@ -131,11 +124,14 @@ EOF
     pip3 install --force-reinstall -v numpy==1.22.0
     #pandas version with date: https://pandas.pydata.org/docs/whatsnew/index.html
 
-    #pip3 install --force-reinstall -v "MarkupSafe==1.1.1"
-    #pip3 install --force-reinstall -v "Jinja2==2.11.3"
+    pip3 install --force-reinstall -v "Jinja2==2.11.3"
+    pip3 install --force-reinstall -v "MarkupSafe==1.1.1" # install Jinja2 before install MarkupSafe to avoid Jinja2 update MarkupSafe
+    # pip3 install --force-reinstall -v "seldon-core=1.2.3"  # wpai mirror not support install seldon-core
+
+    pip3 install --upgrade nvitop # GPU info
 
     #yes | pip3 uninstall $(pip3 list | grep 'cuda.*12' | awk '{print $1}')
     echo "pipe list | grep end"
-    pip3 list | grep -E 'cuda|diffusers|gradio|mmcv|mmdet|modelscope|numpy|onnxruntime|pandas|protobuf|torch|MarkupSafe|Jinja2'
+    pip3 list | grep -E 'cuda|diffusers|gradio|mmcv|mmdet|modelscope|numpy|onnxruntime|pandas|protobuf|torch|MarkupSafe|Jinja2|seldon-core|nvitop'
 
-} >>"logs__$(date "+%y%m%d_%H%M%S")_$(basename -- "$0").log" 2>&1 &
+} # >>"logs__$(date "+%y%m%d_%H%M%S")_$(basename -- "$0").log" 2>&1 &

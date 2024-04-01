@@ -79,10 +79,10 @@ class Logger:
     @staticmethod
     def not_wktk_file(filename):
         """filename is relative path not absolute path"""
+        if filename.endswith(C_FILE_BASENAME):  # 执行文件为本身(最高优先级)
+            return True
         if 'site-packages/wktk4py' in filename:
             return False  # 包依赖wktk4py
-        if filename.endswith(C_FILE_BASENAME):
-            return False
         if filename.startswith(C_FILE_ROOT_DIR):
             return False  # 与当前脚本同文件夹
         return True
@@ -102,7 +102,7 @@ class Logger:
             code = f.f_code
             code_filename = str(code.co_filename)
             b_not_wktk_file = Logger.not_wktk_file(code_filename)
-            # print(f'[layer_back_c] {layer_back:>5} {code.co_name:>30} {b_not_wktk_file!s:>5} {code.co_filename}:{f.f_lineno}')
+            # print(f'[layer_back_c] {layer_back:>5} {code.co_name:>30} {b_not_wktk_file!s:>5} "{code.co_filename}:{f.f_lineno}"')
             if b_not_wktk_file:  # 打印不是wktk下的stack信息
                 # 在<module>(非函数里)的import调用最底层
                 if '<frozen importlib' in code_filename:
@@ -119,6 +119,7 @@ class Logger:
     def _logger_find_caller(stack_info=False):
         Logger._logger_find_caller(stack_info, stacklevel=1)
 
+    # noinspection PyRedeclaration
     @staticmethod
     def _logger_find_caller(stack_info=False, stacklevel=1):
         """refs: tensorflow.python.platform.tf_logging._logger_find_caller
@@ -255,7 +256,7 @@ class PF:
         return string_io.getvalue() if string_io else None
 
     @staticmethod
-    def p(*args, sep=' ', layer_back=0, prt=None):
+    def p(*args, sep=' ', layer_back=0, prt=None, nl=0):
         # PF.p(self, *args, sep=' ', end='\n', file=None): # known special case of print
         # PF.info(s, stack_info=dict(layer_back=1))
         stack_info = False if layer_back == 0 else dict(layer_back=layer_back)
@@ -266,6 +267,9 @@ class PF:
             msg = str(args[0])
         else:
             msg = sep.join([str(x) for x in args])
+
+        if nl and nl > 0:
+            msg = ('\n' * nl) + msg
 
         msg_prt = msg
         if prt or PF.PRT:  # 打印与上一次打印的间隔
@@ -317,8 +321,12 @@ class PF:
         return PF.print_list(argv, title="PF.print_argv")
 
     @staticmethod
-    def print_stack(title='', content='', end_layer=-1, detail=True, e=None, e_var=False):
+    def print_stack(title='', content='', end_layer=-1, detail=True, e=None, e_var=False, ret_ol=True):
         """https://stackoverflow.com/a/16589622/6494418"""
+
+        def __format_stack_print(x):
+            return x.rstrip().replace('  File "', '  -- ').replace('", line ', ':').replace(', in ', ' -- ')
+
         from sys import exc_info
         from traceback import extract_stack, format_exc, format_list, TracebackException
         exc0 = exc_info()[0]
@@ -350,18 +358,15 @@ class PF:
             
             """
             info_keeper.append(SU.hf('more_stack%s' % title_formatted, pre=''))
-            info_keeper.append(''.join(format_list(stack)).rstrip()
-                               .replace('  File "', '  -- ')
-                               .replace('", line ', ':')
-                               .replace(', in ', ' -- '))
+            info_keeper.append(__format_stack_print(''.join(format_list(stack))))
         if content:
             info_keeper.append(SU.hf('PF.exit', pre=''))
             info_keeper.append(content)
             info_keeper.append('')
-        info_keeper = '\n'.join(info_keeper)
+        info_keeper = __format_stack_print('\n'.join(info_keeper))
         if detail:
             info_keeper = 'print_stack\n' + info_keeper
-        return PF.p(info_keeper)
+        return PF.p(info_keeper).replace('\n', ' NNNN ') if ret_ol else PF.p(info_keeper)
 
     @staticmethod
     def exit(*args):
@@ -524,47 +529,49 @@ class ElapseTime:
         return SU.hf("ElapseTime --- %.2fm --- // %s" % (elapse, self.info))
 
 
-class Timestamp:
-    def __init__(self, flag=''):
+class TimeMarker:
+    def __init__(self, flag='', info=''):
         self._start = time()
         self._c_start = self._start
         self.flag = flag
         self.log_keeper = []
 
-        dt = DateTime.datetime(self._start, f='p')
-        msg = "Timestamp( %s ).Sta: %s\n\n\n" % (flag, dt)
-        self.log_keeper.append(msg)
-        PF.p(msg)
+        self.log('Sta', self._c_start, 0, info)
 
-    def log(self, msg):
-        self.log_keeper.append(msg)
-        PF.p(msg, layer_back=2)
+    def __str__(self):
+        return " ".join([str(x) for x in self.log_keeper])
 
     def cut(self, info=""):
         cur_time = time()
         run_time = cur_time - self._c_start
         self._c_start = cur_time
-
-        dt = DateTime.datetime(cur_time, f='p')
-        info = ' -- ' + info if info else ''
-        msg = "Timestamp( %s ).Cut: %s(%.2fs)%s" % (self.flag, dt, run_time, info)
-        self.log(msg)
+        self.log('Cut', self._c_start, run_time, info)
         return run_time
 
-    def end(self, info=None, e=None):
+    def end(self, info='', e=0):
         cur_time = time()
-        run_time = cur_time - self._start
-        dt = DateTime.datetime(cur_time, f='p')
-        info = ' -- ' + info if info else ''
-        msg = "Timestamp( %s ).End: %s(%.2fs)%s\n\n\n" % (self.flag, dt, run_time, info)
-        self.log(msg)
-        if e:
+        run_time = cur_time - self._start  # full runtime
+        self._c_start = cur_time
+        self.log('End', self._c_start, run_time, info)
+        if e > 0:
             PF.exit(e)
 
         return run_time
 
-    def get_log(self):
-        return "\n".join([str(x) for x in self.log_keeper])
+    def log(self, fn, cur_time, run_time, info):
+        ts = DateTime.datetime(cur_time, f='p')
+        info_p = ' -- ' + str(info) if info else str(info)
+        token = fn[0] if not info else f"{fn[0]}.{info}"
+        log_keeper_val = f"{token}:{run_time:.2f}"
+
+        if fn == 'Cut':
+            self.log_keeper.append(log_keeper_val)
+        elif fn == 'End':
+            self.log_keeper.insert(0, log_keeper_val)
+            info_p = f'{info_p} -- {str(self)}'
+
+        msg = f"TimeMarker( {self.flag} ).{fn}: {ts}({run_time:.2f}s){info_p}"
+        PF.p(msg, layer_back=2)
 
 
 class PickleUtils:
@@ -861,7 +868,7 @@ class Repo:
 class DateTime:
     @staticmethod
     def datetime(seconds=None, f='%Y%m%d_%H%M%S'):
-        """given ts, return fmt datetime"""
+        """given ts, return fmt datetime. gmtime not correct with localtime!"""
         if f == 's':
             f = '%Y%m%d_%H%M%S'
         elif f == 'p':
@@ -1332,6 +1339,18 @@ class SU:
         """
         return s.translate({ord(i): None for i in bad_chars})
 
+    @staticmethod
+    def format_table(rows, transpose=False):
+        """https://stackoverflow.com/a/12065663/6494418"""
+        if transpose:
+            """https://stackoverflow.com/a/6473724/6494418"""
+            rows = list(map(list, itertools.zip_longest(*rows, fillvalue='')))
+        widths = [max(map(len, map(str, col))) for col in zip(*rows)]
+        p = []
+        for row in rows:
+            p.append('  '.join((val.ljust(width) for val, width in zip(row, widths))))
+        return '\n'.join(p)
+
 
 class Args:
     CODE_TRUE = ('1', 't')
@@ -1596,7 +1615,7 @@ def t2():
 
 
 def t1():
-    ts = Timestamp()
+    ts = TimeMarker()
     ts.cut("hello")
     ts.end()
     PF.PRT = True
@@ -1630,13 +1649,21 @@ def t4(a, b):
         PF.print_stack(e=e)
 
 
-if __name__ == '__main__':
+def t5():
     # t3()
     # UT.msg_phone('meishi', http_url='ms')
     # t4(1, 2)
     print(SU.clean_chars("()真的是,这个吗''""'"))
     # Args.get_paired_args("1 2 3 4=5".split())
     PF.p('hello')
-    ts = Timestamp('train')
-    ts.cut('hello')
-    ts.end('good')
+    tm = TimeMarker('train')
+    tm.cut('hello')
+    tm.end('running end')
+
+    # PF.p(SU.format_table([['a', 'b', 'c'], ['aaaaa', 'b', 'c'], ['a', 'bbbbbbbbbb', 'c']], transpose=True), nl=3)
+    # PF.p(SU.format_table([['a', 'b', 'c'], ['aaaaa', 'b', 'c'], ['a', 'bbbbbbbbbb', 'c']]), nl=3)
+
+
+if __name__ == '__main__':
+    # do Not assign variable here, will hint `Shadows name 'variable' from outer scope `
+    t5()

@@ -14,13 +14,14 @@ EOF
 
 date1=$(date +"%s")
 
-PROJECT_DIR="/code/dkc/project/facegen_tc201"
-model_dir="${PROJECT_DIR}/data/cache_model"
+PROJECT_DIR="/code/dkc/project/facegen_tc212"
+WORKSPACE_DIR="/workspace/model/facegen_tc212"
+model_dir="${PROJECT_DIR}"
 
 if [[ ! -d "${model_dir}" ]]; then
     echo "$model_dir does not exist. copy all project!"
     mkdir -p "${model_dir}"
-    cp -r /workspace/facegen/* ${PROJECT_DIR}/
+    cp -r ${WORKSPACE_DIR}/* ${PROJECT_DIR}/
 else
     model_size=$( (du -s "${model_dir}" || echo "0") | awk '{print $1}')
     check_size=1000000
@@ -28,7 +29,7 @@ else
         echo "[ERROR] model_dir( ${model_dir} ) exist and size over ${check_size}! delete first!" && exit 15
     else
         echo "$model_dir does exist. only rsync code!"
-        rsync -avzr --perms --chmod=a+rwx --include={*/,*.py,*.sh} --exclude="*" /workspace/facegen/* ${PROJECT_DIR}/
+        rsync -avzr --perms --delete --chmod=a+rwx --include={*/,*.py,*.sh} --exclude="*" ${WORKSPACE_DIR}/* ${PROJECT_DIR}/
     fi
 fi
 
