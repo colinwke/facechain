@@ -9,11 +9,13 @@ None.*
 /generated*
 /imgs*
 /processed*
+
 /style*
 /resources*
 /poses*
 /input*
 /processor_*.py
+!/processor_impl*.py
 
 # ----------------------------------------------------------------
 # wk common default
