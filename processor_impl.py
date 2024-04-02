@@ -175,7 +175,7 @@ def make_ret_val(req_dict, code=-999, msg='unknown'):
     return ret_val
 
 
-def run_model(model, x, kwargs={}):
+def run_model_impl(model, x, kwargs={}):
     """ 多线程处理框架, 达到请求即返回结果的目的 """
     global thread_manager
     thread_manager = [t for t in thread_manager if t.is_alive()]

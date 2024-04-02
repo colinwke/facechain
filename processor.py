@@ -17,9 +17,11 @@ def print_stack():
     from traceback import extract_stack, format_list, format_exc
     fmt_stack_str = ''.join(format_list(extract_stack())[:-1])
     fmt_exc_str = format_exc().strip()
-    fmt_stack_str = f'{fmt_stack_str}{fmt_exc_str if fmt_exc_str != "NoneType: None" else ""}'
-    fmt_stack_str = fmt_stack_str.rstrip().replace('File "', '').replace('", line ', ':').replace(', in ', ' -- ')
-    print(f"--- [print_stack] ---\n{fmt_stack_str}\n^^^^^^\n")
+    fmt_stack_str = f'{fmt_stack_str}{fmt_exc_str if fmt_exc_str != "NoneType: None" else ""}'.rstrip().split('\n')
+    fmt_stack_str = '\n'.join([x.replace('File "', '"').replace('", line ', ':').replace(', in ', '" -- ') for x in fmt_stack_str if x.startswith('  File "')])
+    content = f"--- [print_stack] ---\n{fmt_stack_str}\n^^^^^^\n"
+    print(content)
+    return content
 
 
 class Demo:
@@ -66,20 +68,21 @@ def run_model(model, x, **kwargs):
 
         if IMPL_FILE_MFT is None:
             import processor_impl
-            from processor_impl import run_model_impl
             IMPL_FILE_MFT = IMPL_FILE_MFT_cur
-            print(f'\n\n\n\n\n[check_reload_impl_file] update:{IMPL_FILE_MFT} to:{IMPL_FILE_MFT_cur}')
+            print(f'\n\n\n\n\n[check_reload_impl_file1] update:{IMPL_FILE_MFT} to:{IMPL_FILE_MFT_cur}')
+            from processor_impl import run_model_impl
         elif IMPL_FILE_MFT != IMPL_FILE_MFT_cur:
             import processor_impl
+            IMPL_FILE_MFT = IMPL_FILE_MFT_cur
+            print(f'\n\n\n\n\n[check_reload_impl_file2] update:{IMPL_FILE_MFT} to:{IMPL_FILE_MFT_cur}')
             reload(processor_impl)  # not update function
             from processor_impl import run_model_impl
-            IMPL_FILE_MFT = IMPL_FILE_MFT_cur
-            print(f'\n\n\n\n\n[check_reload_impl_file] update:{IMPL_FILE_MFT} to:{IMPL_FILE_MFT_cur}')
 
         # noinspection PyCallingNonCallable
-        run_model_impl(model, x, **kwargs)
+        ret = run_model_impl(model, x, **kwargs)
+        return str(run_model_impl(model, x, **kwargs))
     except:
-        print_stack()
+        return print_stack()
 
 
 def t1():
