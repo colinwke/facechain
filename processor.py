@@ -13,12 +13,17 @@ import os
 from importlib import reload
 
 
+def print_stack_format_line(stack_str):
+    return '\n'.join([x.replace('File "', '"').replace('", line ', ':').replace(', in ', '" -- ')
+                      if x.startswith('  File "') else x for x in stack_str.rstrip().split('\n')])
+
+
 def print_stack():
     from traceback import extract_stack, format_list, format_exc
     fmt_stack_str = ''.join(format_list(extract_stack())[:-1])
     fmt_exc_str = format_exc().strip()
-    fmt_stack_str = f'{fmt_stack_str}{fmt_exc_str if fmt_exc_str != "NoneType: None" else ""}'.rstrip().split('\n')
-    fmt_stack_str = '\n'.join([x.replace('File "', '"').replace('", line ', ':').replace(', in ', '" -- ') for x in fmt_stack_str if x.startswith('  File "')])
+    fmt_stack_str = f'{fmt_stack_str}{fmt_exc_str if fmt_exc_str != "NoneType: None" else ""}'
+    fmt_stack_str = print_stack_format_line(fmt_stack_str)
     content = f"--- [print_stack] ---\n{fmt_stack_str}\n^^^^^^\n"
     print(content)
     return content
@@ -39,12 +44,12 @@ def load_model():
     return Demo()
 
 
-def preprocess(x):
+def preprocess(x, *args, **kwargs):
     """do not remove! wpai predictor.py will call! """
     return x
 
 
-def postprocess(x):
+def postprocess(x, *args, **kwargs):
     """do not remove! wpai predictor.py will call! """
     return x
 
@@ -80,7 +85,7 @@ def run_model(model, x, **kwargs):
 
         # noinspection PyCallingNonCallable
         ret = run_model_impl(model, x, **kwargs)
-        return str(run_model_impl(model, x, **kwargs))
+        return str(ret)
     except:
         return print_stack()
 

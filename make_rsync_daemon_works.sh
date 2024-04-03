@@ -41,9 +41,13 @@ auth users = *
 # --------------------------------
 # Modules Config
 # --------------------------------
+[r]
+path = /
 
-[facegen_tc212]
-path = /workspace/model/facegen_tc212
+#[facegen_tc212]
+## path = /workspace/model/facegen_tc212
+#path = /code/dkc/project/facegen_tc212
+
 
 EOF
 
@@ -55,4 +59,4 @@ EOF
 /usr/bin/rsync --daemon --config=/etc/rsyncd/rsyncd.conf
 ip=$(ifconfig | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p' | tail -n 1 | tr -d '[:space:]')
 
-echo "## rsync -avz --perms --chmod=a+rwx dk@${ip}::facegen_tc212 ."
+echo "## rsync -avzP --perms --chmod=a+rwx dk@${ip}::r$(pwd) ."

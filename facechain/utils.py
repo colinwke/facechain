@@ -33,7 +33,7 @@ def max_retries(max_attempts):
 
 # @max_retries(1)
 def snapshot_download_dk(model_id, revision=DEFAULT_MODEL_REVISION, cache_dir=None, user_agent=None):
-    local_file_only = not os.path.exists('/code/dkc/project/facegen_tc201')
+    # local_file_only = not os.path.exists('/code/dkc/project/facegen_tc201')
     local_file_only = True
     model_dir = ms_snapshot_download(
         model_id=model_id,

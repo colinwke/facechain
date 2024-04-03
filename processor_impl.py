@@ -175,7 +175,7 @@ def make_ret_val(req_dict, code=-999, msg='unknown'):
     return ret_val
 
 
-def run_model_impl(model, x, kwargs={}):
+def run_model_impl(model, x, kwargs={}, **kwargs2):
     """ 多线程处理框架, 达到请求即返回结果的目的 """
     global thread_manager
     thread_manager = [t for t in thread_manager if t.is_alive()]
@@ -274,8 +274,7 @@ def local_test():
         先快速上线demo, 后优化
     """
 
-    model = load_model()
-    for i in range(2):
+    for i in range(1):
         sid = UT.get_uuid()
         # run_model(model,"http://10.186.8.103:8994/truck.png?points_mode=1,1&points_coord=250,184|562,290")
         reqid = 'iShot_2024-03-20_18.52.38.png'
@@ -289,7 +288,7 @@ def local_test():
 
         req_json = UT.json2str(req_dict)
         PF.p(req_json)
-        ret = run_model(model, req_json)
+        ret = run_model_impl(None, req_json)
         PF.p(ret)
         PF.p("done")
 

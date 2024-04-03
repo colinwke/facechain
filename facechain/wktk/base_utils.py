@@ -321,23 +321,24 @@ class PF:
         return PF.print_list(argv, title="PF.print_argv")
 
     @staticmethod
-    def print_stack_spl():
+    def print_stack_format_line(stack_str):
+        return '\n'.join([x.replace('File "', '"').replace('", line ', ':').replace(', in ', '" -- ')
+                          if x.startswith('  File "') else x for x in stack_str.rstrip().split('\n')])
+
+    @staticmethod
+    def print_stack2():
         from traceback import extract_stack, format_list, format_exc
         fmt_stack_str = ''.join(format_list(extract_stack())[:-1])
         fmt_exc_str = format_exc().strip()
         fmt_stack_str = f'{fmt_stack_str}{fmt_exc_str if fmt_exc_str != "NoneType: None" else ""}'
-        fmt_stack_str = fmt_stack_str.rstrip().replace('File "', '').replace('", line ', ':').replace(', in ', ' -- ')
+        fmt_stack_str = PF.print_stack_format_line(fmt_stack_str)
         content = f"--- [print_stack] ---\n{fmt_stack_str}\n^^^^^^\n"
-        PF.p(content)
+        print(content)
         return content
 
     @staticmethod
     def print_stack(title='', content='', end_layer=-1, detail=True, e=None, e_var=False, ret_ol=True):
         """https://stackoverflow.com/a/16589622/6494418"""
-
-        def __format_stack_print(x):
-            return x.rstrip().replace('  File "', '  -- ').replace('", line ', ':').replace(', in ', ' -- ')
-
         from sys import exc_info
         from traceback import extract_stack, format_exc, format_list, TracebackException
         exc0 = exc_info()[0]
@@ -363,12 +364,12 @@ class PF:
         if detail:
             """refs: traceback.StackSummary.format"""
             info_keeper.append(SU.hf('more_stack%s' % title_formatted, pre=''))
-            info_keeper.append(__format_stack_print(''.join(format_list(stack))))
+            info_keeper.append(PF.print_stack_format_line(''.join(format_list(stack))))
         if content:
             info_keeper.append(SU.hf('PF.exit', pre=''))
             info_keeper.append(content)
             info_keeper.append('')
-        info_keeper = __format_stack_print('\n'.join(info_keeper))
+        info_keeper = PF.print_stack_format_line('\n'.join(info_keeper))
         if detail:
             info_keeper = 'print_stack\n' + info_keeper
         return PF.p(info_keeper).replace('\n', ' NNNN ') if ret_ol else PF.p(info_keeper)
