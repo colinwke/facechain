@@ -12,7 +12,7 @@ if [[ $# -ge 1 ]]; then
     config_flag=$1
 fi
 
-date1=$(date +"%s")
+date1=$(date +%s)
 ip=10.253.69.198
 from_path="dk/working/facechain/*"
 to_path="."
@@ -26,6 +26,6 @@ else
 fi
 
 echo "DONE"
-date2=$(date +"%s")
+date2=$(date +%s)
 DIFF=$((date2 - date1))
 echo "Duration: $((DIFF / 3600)) hours $(((DIFF % 3600) / 60)) minutes $((DIFF % 60)) seconds"

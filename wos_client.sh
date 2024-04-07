@@ -130,6 +130,7 @@ if [ -z $localfile ]; then
 fi
 
 userinfo() {
+    #    : # like python pass
     debug "tokenserver: $tokenserver"
     debug "wosserver: $wosserver"
     debug "appkey: $appkey"

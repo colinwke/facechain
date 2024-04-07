@@ -4,7 +4,11 @@
 # @author: Wang Ke
 # @contact: wangke09@58.com
 # ----------------------------------------------------------------
+import urllib
+import urllib.request
+import uuid
 import warnings
+from urllib.parse import urlparse, parse_qs
 
 warnings.simplefilter('ignore')
 
@@ -42,8 +46,9 @@ from time import strftime, localtime, mktime, strptime, time
 from traceback import format_stack
 from yaml import safe_load as load, safe_dump as dump, YAMLError
 
-RUN_TIME = strftime("%y%m%d_%H%M%S", localtime())
 SEP_LINE_64 = "-" * 64
+RUNTIME_FLAG = strftime("%y%m%d_%H%M%S", localtime())
+PROJECT_DIR = abspath('%s/' % dirname(realpath(__file__)) + ('../' * 2))
 
 
 def _is_local_running():
@@ -931,7 +936,7 @@ class Bash:
         run_time = strftime("%y%m%d_%H%M%S", localtime())
         if log_file and isinstance(log_file, str):
             if log_file == "":
-                log_file = "./log/%s_bash_sh.log" % RUN_TIME  # auto log_file
+                log_file = "./log/%s_bash_sh.log" % RUNTIME_FLAG  # auto log_file
             cmd = "%s 2>&1 | tee -a '%s'" % (cmd, log_file)
         else:
             cmd = "%s 2>&1" % cmd
@@ -1602,6 +1607,112 @@ class JU:
         return out
 
 
+class UT2:
+    UNIT_MB_OF_BYTE = 1024 * 1024
+
+    @staticmethod
+    def check_url(url):
+        """https://stackoverflow.com/a/1949360/6494418"""
+        try:
+            _ = urllib.request.urlopen(url).getcode()
+            return True
+        except:
+            PF.print_stack()
+            return False
+
+    @staticmethod
+    def parse_url(url_raw):
+        """
+        http://10.186.8.103:8994/pz.mp4?  points_mode=1,1,1&points_coord=300,300|306,249|306,359&sid=12345678910
+        """
+        ret_dict = {}
+
+        url_fix = urllib.parse.unquote(url_raw)
+        if not UT2.check_url(url_fix):
+            return {"": ""}
+
+        url_pic = url_raw.split('?')[0]
+        filename = url_pic.split('/')[-1]
+        url_parsed = urlparse(url_raw)
+        url_args = parse_qs(str(url_parsed.query))
+
+        def __get_url_args(key, default_val=None):
+            """ uid = __get_url_args('uid', '') """
+            return url_args.get(key, [default_val])[0]
+
+        uid = __get_url_args('uid', '')
+
+        return ret_dict
+
+    @staticmethod
+    def get_gpu_info():
+        """ gpu info by nvitop(more: gpustat, pynvml).
+         - https://nvitop.readthedocs.io/en/latest/#quick-start # nvitop
+         - https://stackoverflow.com/a/59571639/6494418 # nvidia-smi --query-gpu=memory.free --format=csv
+        """
+        # noinspection PyUnresolvedReferences
+        from nvitop import Device
+        device0 = Device.all()[0]
+        gpu_info = AttrDict({
+            'utl': device0.gpu_utilization(),
+            'total': device0.memory_total() / UT2.UNIT_MB_OF_BYTE,
+            'used': device0.memory_used() / UT2.UNIT_MB_OF_BYTE,
+            'free': device0.memory_free() / UT2.UNIT_MB_OF_BYTE
+        })
+
+        return gpu_info
+
+    @staticmethod
+    def sh(cmd):
+        """curl URL to IMG.png can not redirect"""
+        # cmd = f'{cmd} 2>&1 >logs__{UT2.get_ts(tm=False)}_shell.log'  # `>logs__$(date +%y%m%d_%H)_shell.log` or `>/dev/null`
+        PF.p(f'$$ {cmd}', layer_back=1)
+        system(cmd)
+
+    @staticmethod
+    def json2str(obj):
+        return dumps(obj, separators=(',', ':'), ensure_ascii=False)
+
+    @staticmethod
+    def clean_path_name(path):
+        """clean all punctuation https://stackoverflow.com/a/13593932/6494418"""
+        return sub(r'[^\w_, -]+', '_', path).replace(".", "__")
+
+    @staticmethod
+    def get_ts(tm=True):
+        """gmtime not correct with localtime. timestamp, dts:`%y%m%d_%H%M%S`; unixtimestamp, tms, ms: 12134"""
+        return strftime("%y%m%d_%H%M%S" if tm else "%y%m%d", localtime())
+
+    @staticmethod
+    def get_tsd(tm=True):
+        """https://stackoverflow.com/a/71079084/6494418"""
+        return datetime.now().strftime("%y%m%d_%H%M%S" if tm else "%y%m%d")
+
+    @staticmethod
+    def get_uuid():
+        return str(uuid.uuid4().hex)
+
+    @staticmethod
+    def N(v=None, d=None):
+        return v if v is not None else d
+
+    @staticmethod
+    def if_not_exist_put(d, key, val, invalid_set=None):
+        if key not in d or (invalid_set and d[key] in invalid_set):
+            d[key] = val
+            return val
+        else:
+            return d[key]
+
+    @staticmethod
+    def upload_to_wos(local_filepath, upload_filename, bucket):
+        if upload_filename is None:
+            upload_filename = basename(local_filepath)
+        UT2.sh(
+            f'sh {PROJECT_DIR}/wos_client.sh -t token.wos.58dns.org -h wosin17.58corp.com -a QrxnMlKjQrtW -s gK9T1G9BBox7Tk9dW7kRtyuvXLNVuyly -b {bucket} -l {local_filepath} -f {upload_filename} upload'
+        )
+
+
 def t2():
     content = """蓬莱一品民俗家庭公寓
     蓬莱金萍渔家乐
@@ -1670,6 +1781,14 @@ def t5():
     # PF.p(SU.format_table([['a', 'b', 'c'], ['aaaaa', 'b', 'c'], ['a', 'bbbbbbbbbb', 'c']]), nl=3)
 
 
+def t6():
+    url = 'http://10.186.8.94:8000/iShot_2024-03-20_18.52.38.png'
+    url = 'http://prod17.wos.58dns.org/QrxnMlKjQrtW/imgfaceid/result_iShot_2024-03-20_18.53.17.png.json'
+    print(UT2.check_url(url))
+    UT2.upload_to_wos(f'{PROJECT_DIR}/processor.py.py', None, 'imgfaceid')
+    PF.p(PROJECT_DIR)
+
+
 if __name__ == '__main__':
     # do Not assign variable here, will hint `Shadows name 'variable' from outer scope `
-    t5()
+    t6()

@@ -12,7 +12,7 @@ elapse of script with linux: https://stackoverflow.com/a/20249473/6494418
 EOF
 )
 
-date1=$(date +"%s")
+date1=$(date +%s)
 
 PROJECT_DIR="/code/dkc/project/facegen_tc212"
 WORKSPACE_DIR="/workspace/model/facegen_tc212"
@@ -29,7 +29,7 @@ else
         echo "[ERROR] model_dir( ${model_dir} ) exist and size over ${check_size}! delete first!" && exit 15
     else
         echo "$model_dir does exist. only rsync code!"
-        rsync -avzr --perms --delete --chmod=a+rwx --include={*/,*.py,*.sh} --exclude="*" ${WORKSPACE_DIR}/* ${PROJECT_DIR}/
+        rsync -avzr --perms --chmod=a+rwx --include={*/,*.py,*.sh} --exclude="*" ${WORKSPACE_DIR}/* ${PROJECT_DIR}/  # --delete not work
     fi
 fi
 
@@ -40,6 +40,6 @@ project_size=$( (du -s "${PROJECT_DIR}" || echo "0") | awk '{print $1}')
 cat <<-EOF
 [size] $((project_size / (1000 * 1000)))G || ${project_size}
 [path] ${PROJECT_DIR}
-[elapse] $(($(date +"%s") - date1)) seconds!
+[elapse] $(($(date +%s) - date1)) seconds!
 
 EOF

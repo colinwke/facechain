@@ -73,13 +73,13 @@ def run_model(model, x, **kwargs):
 
         if IMPL_FILE_MFT is None:
             import processor_impl
-            IMPL_FILE_MFT = IMPL_FILE_MFT_cur
             print(f'\n\n\n\n\n[check_reload_impl_file1] update:{IMPL_FILE_MFT} to:{IMPL_FILE_MFT_cur}')
+            IMPL_FILE_MFT = IMPL_FILE_MFT_cur
             from processor_impl import run_model_impl
         elif IMPL_FILE_MFT != IMPL_FILE_MFT_cur:
             import processor_impl
-            IMPL_FILE_MFT = IMPL_FILE_MFT_cur
             print(f'\n\n\n\n\n[check_reload_impl_file2] update:{IMPL_FILE_MFT} to:{IMPL_FILE_MFT_cur}')
+            IMPL_FILE_MFT = IMPL_FILE_MFT_cur
             reload(processor_impl)  # not update function
             from processor_impl import run_model_impl
 
