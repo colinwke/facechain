@@ -1614,8 +1614,8 @@ class UT2:
     def check_url(url):
         """https://stackoverflow.com/a/1949360/6494418"""
         try:
-            _ = urllib.request.urlopen(url).getcode()
-            return True
+            code = urllib.request.urlopen(url).getcode()
+            return code == 200
         except:
             PF.print_stack()
             return False
@@ -1712,6 +1712,15 @@ class UT2:
             f'sh {PROJECT_DIR}/wos_client.sh -t token.wos.58dns.org -h wosin17.58corp.com -a QrxnMlKjQrtW -s gK9T1G9BBox7Tk9dW7kRtyuvXLNVuyly -b {bucket} -l {local_filepath} -f {upload_filename} upload'
         )
 
+    @staticmethod
+    def if_argv(idx, defalut_value=None):
+        # return argv[idx] if len(argv) >= idx else defalut_value
+        if len(argv) >= idx:
+            PF.p(f'[if_argv]   given(argv.{idx})={argv[idx]}')
+            return argv[idx]
+        PF.p(f'[if_argv] default(argv.{idx})={defalut_value}')
+        return defalut_value
+
 
 def t2():
     content = """蓬莱一品民俗家庭公寓
@@ -1783,9 +1792,9 @@ def t5():
 
 def t6():
     url = 'http://10.186.8.94:8000/iShot_2024-03-20_18.52.38.png'
-    url = 'http://prod17.wos.58dns.org/QrxnMlKjQrtW/imgfaceid/result_iShot_2024-03-20_18.53.17.png.json'
+    url = 'http://prod17.wos.58dns.org/QrxnMlKjQrtW/imgfaceid/result_240407_150735_iShot_2024-03-20_18_53_51_png.json'
     print(UT2.check_url(url))
-    UT2.upload_to_wos(f'{PROJECT_DIR}/processor.py.py', None, 'imgfaceid')
+    # UT2.upload_to_wos(f'{PROJECT_DIR}/processor.py.py', None, 'imgfaceid')
     PF.p(PROJECT_DIR)
 
 

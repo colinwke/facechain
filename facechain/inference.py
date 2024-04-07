@@ -683,7 +683,6 @@ class GenPortrait:
             input_img_dir,
             num_gen_images=6,
             base_model_path=None,
-
             lora_model_path=None,
             sub_path=None,
             revision=None,
@@ -721,8 +720,12 @@ class GenPortrait:
         # face_swap cv2
         swap_results = face_swap_fn(self.use_face_swap, gen_results, selected_face)
         # pose_process
-        rank_results = post_process_fn(self.use_post_process, swap_results, selected_face,
-                                       num_gen_images=num_gen_images)
+        rank_results = post_process_fn(
+            self.use_post_process,
+            swap_results,
+            selected_face,
+            num_gen_images=num_gen_images
+        )
         # stylization
         final_gen_results = stylization_fn(self.use_stylization, rank_results)
         sr_pipe = pipeline_dk(Tasks.image_super_resolution, model='damo/cv_rrdb_image-super-resolution')

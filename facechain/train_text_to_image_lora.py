@@ -27,7 +27,7 @@ import sys
 from pathlib import Path
 from typing import Tuple
 
-from project_env import init_env
+from env_config import init_env
 
 init_env()
 

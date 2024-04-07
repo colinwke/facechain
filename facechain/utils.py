@@ -10,7 +10,7 @@ from modelscope import snapshot_download as ms_snapshot_download, Pipeline, pipe
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION
 
 from facechain.wktk.base_utils import PF
-from project_env import PROJECT_DIR
+from env_config import PROJECT_DIR
 
 
 def max_retries(max_attempts):
