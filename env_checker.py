@@ -11,6 +11,7 @@ https://blog.csdn.net/qq_43743827/article/details/126859013
 重新安装mmcv-full
 """
 import os
+from importlib import reload
 
 from facechain.wktk.base_utils import PF
 
@@ -39,6 +40,8 @@ def check_mmcv():
         print('[check_mmcv] install mmcv-full ...')
         os.system("yes | pip3 uninstall mmcv-full")
         os.system("pip3 install mmcv-full")
+        import mmcv
+        reload(mmcv)
 
 
 def check_env():

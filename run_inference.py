@@ -4,14 +4,14 @@ import os
 
 import cv2
 
-from project_env import init_env
+from env_config import init_env
 
 init_env()
 
 from facechain.constants import neg_prompt, pos_prompt_with_cloth, pos_prompt_with_style, base_models
 from facechain.inference import GenPortrait
 from facechain.utils import snapshot_download_dk, PROJECT_DIR
-from facechain.wktk.base_utils import PF, TimeMarker, DateTime
+from facechain.wktk.base_utils import PF, TimeMarker, DateTime, UT2
 
 
 def generate_pos_prompt(
@@ -77,7 +77,7 @@ def main_predict(reqid='iShot_2024-03-20_18.53.51.png', user_prompt_cloth='', us
     style = styles[0]
     model_id = style['model_id']
 
-    if model_id == None:
+    if model_id is None:
         style_model_path = None
         pos_prompt = generate_pos_prompt(
             style['name'],
@@ -108,26 +108,29 @@ def main_predict(reqid='iShot_2024-03-20_18.53.51.png', user_prompt_cloth='', us
         model_dir = snapshot_download_dk('damo/face_chain_control_model', revision='v1.0.1')
         pose_model_path = os.path.join(model_dir, 'model_controlnet/control_v11p_sd15_openpose')
 
-    all_params = """pose_model_path, pose_image, use_depth_control, pos_prompt, neg_prompt, style_model_path,
-                               multiplier_style, multiplier_human, use_main_model,
-                               use_face_swap, use_post_process,
-                               use_stylization"""
-    all_params = [x.strip() for x in all_params.split(',')]
-    PF.print_list(all_params, 'all_params')
-    all_params = dict(zip(all_params, [str(x) for x in [pose_model_path, pose_image, use_depth_control, pos_prompt, neg_prompt, style_model_path,
-                                                        multiplier_style, multiplier_human, use_main_model,
-                                                        use_face_swap, use_post_process,
-                                                        use_stylization]]))
+    gen_portrait = GenPortrait(
+        pose_model_path,
+        pose_image,
+        use_depth_control,
+        pos_prompt,
+        neg_prompt,
+        style_model_path,
+        multiplier_style,
+        multiplier_human,
+        use_main_model,
+        use_face_swap,
+        use_post_process,
+        use_stylization
+    )
 
-    PF.print_dict(all_params, title='all_params')
-
-    gen_portrait = GenPortrait(pose_model_path, pose_image, use_depth_control, pos_prompt, neg_prompt, style_model_path,
-                               multiplier_style, multiplier_human, use_main_model,
-                               use_face_swap, use_post_process,
-                               use_stylization)
-
-    outputs = gen_portrait(processed_dir, num_generate, base_model['model_id'],
-                           train_output_dir, base_model['sub_path'], base_model['revision'])
+    outputs = gen_portrait(
+        processed_dir,
+        num_generate,
+        base_model['model_id'],
+        train_output_dir,
+        base_model['sub_path'],
+        base_model['revision']
+    )
 
     os.makedirs(output_dir, exist_ok=True)
     runtime_flag = DateTime.datetime()
@@ -138,5 +141,12 @@ def main_predict(reqid='iShot_2024-03-20_18.53.51.png', user_prompt_cloth='', us
     timestamp.end()
 
 
+def local_test():
+    cloth = 'White background, Wear glasses, Hold face style, Unembellished face, formal wear, formal clothes, identification photo, ID photo, raw photo, masterpiece, chinese, solo, medium shot, high detail face, looking straight into the camera with shoulders parallel to the frame, photorealistic, best quality'
+    reqid = UT2.if_argv(1, 'iShot_2024-03-20_18.53.51.png')
+    cloth = UT2.if_argv(2, cloth)
+    main_predict(reqid=reqid, user_prompt_cloth=cloth)
+
+
 if __name__ == '__main__':
-    main_predict()
+    local_test()

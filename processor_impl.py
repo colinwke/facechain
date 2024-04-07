@@ -43,6 +43,10 @@ from env_checker import check_env
 
 check_env()  # check mmcv etc. first!
 
+import mmcv
+
+reload(mmcv)
+
 from facechain.train_text_to_image_lora import main_training
 
 import facechain.wktk.base_utils
@@ -70,14 +74,15 @@ def make_ret_val(req_dict, code=-999, msg='unknown', result_file=None):
     ret_dict.update(req_dict)
     ret_val = UT2.json2str(ret_dict)
     PF.p(f'[ret_val] {ret_val}', layer_back=1)
-    with open(f'ret_msg_{UT2.get_ts(tm=False)}.log', 'a') as f:
+    with open(f'logs__{UT2.get_ts(tm=False)}_ret_msg.log', 'a') as f:
         f.write(f'{ret_val}\n')
 
     # 单独写入result_file, 并返回wos上的地址, 这里就能保证上传wos的结果文件与日志文件一致
     if result_file is not None:
         with open(result_file, 'w+') as f:
             f.write(f"{ret_val}\n")
-            UT2.upload_to_wos(result_file, None, WOS_BUKET_ID)
+        # over open file context upload
+        UT2.upload_to_wos(result_file, None, WOS_BUKET_ID)
 
     return ret_val
 
@@ -100,7 +105,8 @@ def run_model_impl(model, x, kwargs={}, **kwargs2):
     ts = UT2.if_not_exist_put(req_dict, 'ts', UT2.get_ts())
     sid = req_dict.get('sid')
     reqid = UT2.clean_path_name(f"{req_dict['ts']}_{req_dict['sid']}")
-    reqid = UT2.if_not_exist_put(req_dict, 'reqid', reqid)  # running result id
+    # reqid = UT2.if_not_exist_put(req_dict, 'reqid', reqid)  # running result id
+    req_dict['reqid'] = reqid  # overwrite for all, must include timeflag
     result_file_url = UT2.if_not_exist_put(req_dict, 'result_file_url', f'{WOS_URL_PREFIX}/result_{reqid}.json')
 
     PF.p(f"""
@@ -193,6 +199,7 @@ def local_test():
     for i in range(1):
         sid = UT2.get_uuid()
         sid = 'iShot_2024-03-20_18.53.51.png'
+        sid = '600171245848pic.png'
         req_dict = {
             'pic': f'http://10.186.8.94:8000/{sid}',
             'des': DEFAULT_DES,
