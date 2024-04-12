@@ -1715,7 +1715,7 @@ class UT2:
     @staticmethod
     def if_argv(idx, defalut_value=None):
         # return argv[idx] if len(argv) >= idx else defalut_value
-        if len(argv) >= idx:
+        if len(argv) - 1 >= idx:
             PF.p(f'[if_argv]   given(argv.{idx})={argv[idx]}')
             return argv[idx]
         PF.p(f'[if_argv] default(argv.{idx})={defalut_value}')

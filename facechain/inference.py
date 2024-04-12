@@ -489,7 +489,7 @@ def main_diffusion_inference_multi(
     for tag in tags_all:
         if tags_all.count(tag) > 0.5 * cnt:
             if 'hair' in tag or 'face' in tag or 'mouth' in tag or 'skin' in tag or 'smile' in tag:
-                if not tag in add_prompt_style:
+                if tag not in add_prompt_style:
                     add_prompt_style.append(tag)
 
     if len(add_prompt_style) > 0:
@@ -677,6 +677,8 @@ class GenPortrait:
         self.pose_model_path = pose_model_path
         self.pose_image = pose_image
         self.use_depth_control = use_depth_control
+
+        PF.print_dict(self.__dict__, title=f'{self.__class__}.__dict__')
 
     def __call__(
             self,

@@ -68,14 +68,16 @@ def main_predict(reqid='iShot_2024-03-20_18.53.51.png', user_prompt_cloth='', us
     use_pose_model = False
     pose_image = 'poses/man/pose1.png'
     processed_dir = f'./data/cache_req/{reqid}/output_processed'
-    num_generate = 5
-    multiplier_style = 0.25
-    multiplier_human = 0.85
+    num_generate = 4
+    multiplier_style = 0.15  # 风格权重
+    multiplier_human = 0.95  # 形象权重
     train_output_dir = f'./data/cache_req/{reqid}/output_train'
     output_dir = f'./data/cache_req/{reqid}/output_generated'
     base_model = base_models[0]
     style = styles[0]
     model_id = style['model_id']
+    PF.print_list(styles, title='styles')
+    PF.p(f'[model_id] {model_id}')
 
     if model_id is None:
         style_model_path = None
